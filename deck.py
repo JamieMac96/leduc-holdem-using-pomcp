@@ -1,15 +1,8 @@
-from poker import deck
+from pycfr.card import Card
+from poker.deck import Deck
 
 
-class LeducCard(deck.Card):
-
-    def __init__(self, rank, suit):
-        super().__init__(rank, suit)
-        self.suits = self.suits[2:4]
-        self.ranks = self.ranks[10:]
-
-
-class LeducDeck(deck.Deck):
+class LeducDeck(Deck):
     def __init__(self):
         super().__init__()
         self.init_deck()
@@ -17,7 +10,7 @@ class LeducDeck(deck.Deck):
     def init_deck(self):
         for i in range(2):
             for j in range(3):
-                card = LeducCard(j, i)
+                card = Card(j, i)
                 self.cards.append(card)
 
     def get_cards(self):

@@ -1,4 +1,6 @@
-from leduc.agent import Agent
+from pycfr.card import Card
+from leduc.state import Action
+import random
 
 # In Leduc hold’em, the deck consists of two suits
 # with three cards in each suit. There are two rounds. In the
@@ -8,43 +10,85 @@ from leduc.agent import Agent
 # first and second round, respectively. Both players start the
 # first round with 1 already in the pot
 
-
-ACTIONS=["FOLD", "CALL", "BET", "RAISE"]
+# Note for the purpose of this game, a call with a bet value of 0
+# is considered equivalent to checking
+ACTIONS = ["FOLD", "CALL", "BET", "RAISE"]
 
 
 class Game:
-    def __init__(self, agent, opponent):
-        self.agent = agent
-        self.opponent = opponent
+    def __init__(self):
         self.round = 1
         self.num_bets_this_round = 0
         self.moves_record = list()
-        self.current_pot = 0
+        self.pot = 0
         self.game_over = False
+        self.dealer = Dealer()
+        self.player_card = None
+        self.opponent_card = None
+        self.public_card = None
 
-    def run(self):
-        pass
+    def update_state(self, action):
+        if action.action == "FOLD":
+            self.game_over = True
+
+        elif action.action == "CALL":
+            self.pot += action.bet_amount
+            if self.round == 1:
+                self.round += 1
+                self.num_bets_this_round = 0
+                self.public_card = self.dealer.deal_public()
+            else:
+                self.game_over = True
+        elif action.action == "BET":
+            self.pot += action.bet_amount
+            self.num_bets_this_round += 1
+
+        elif action.action == "RAISE":
+            self.num_bets_this_round += 1
+            self.pot += action.bet_amount * 2
 
     def get_possible_actions(self):
         if self.game_over:
             return []
+        amount = self.get_bet_amounts()
         if self.num_bets_this_round == 0:
-            return ["CALL", "BET"]
+            return [Action("FOLD"), Action("BET", amount)]
         elif self.num_bets_this_round == 1:
-            return ["FOLD", "CALL", "RAISE"]
+            return [Action("FOLD"), Action("CALL", amount), Action("RAISE", amount)]
         elif self.num_bets_this_round == 2:
-            return ["FOLD", "CALL"]
+            return [Action("FOLD"), Action("CALL", amount)]
 
-    def get_raise_amounts(self):
-        if round == 1:
+    def get_bet_amounts(self):
+        if self.round == 1:
             return 2
-        elif round == 2:
+        elif self.round == 2:
             return 4
 
+    def random_policy(self):
+        return random.choice(self.get_possible_actions())
 
-if __name__ == "__main__":
-    player = Agent()
-    opponent = Agent()
+    def reset(self):
+        self.round = 1
+        self.num_bets_this_round = 0
+        self.moves_record = list()
+        self.pot = 0
+        self.game_over = False
+        self.dealer.reset()
+        self.player_card = None
+        self.opponent_card = None
+        self.public_card = None
 
-    game = Game(player, opponent)
-    game.run()
+
+class Dealer:
+    def __init__(self):
+        self.deck = [Card(13, 1), Card(13, 2), Card(12, 1), Card(12, 2), Card(11, 1), Card(11, 2)]
+        random.shuffle(self.deck)
+
+    def deal_private(self):
+        return self.deck[0], self.deck[1]
+
+    def deal_public(self):
+        return self.deck[3]
+
+    def reset(self):
+        random.shuffle(self.deck)
