@@ -16,16 +16,19 @@ ACTIONS = ["FOLD", "CALL", "BET", "RAISE"]
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.button = -1
         self.round = 1
+        self.current_player = -self.button
         self.num_bets_this_round = 0
         self.moves_record = list()
-        self.pot = 0
+        self.pot = 2  # initial blinds for each round are 2
         self.game_over = False
         self.dealer = Dealer()
-        self.player_card = None
-        self.opponent_card = None
+        self.player_card = self.dealer.deal_private()[0]
+        self.opponent_card = self.dealer.deal_private()[1]
         self.public_card = None
+        self.debug = debug
 
     def update_state(self, action):
         if action.action == "FOLD":
@@ -33,6 +36,7 @@ class Game:
 
         elif action.action == "CALL":
             self.pot += action.bet_amount
+            self.current_player = 1
             if self.round == 1:
                 self.round += 1
                 self.num_bets_this_round = 0
@@ -40,23 +44,27 @@ class Game:
             else:
                 self.game_over = True
         elif action.action == "BET":
+            self.current_player *= -1
             self.pot += action.bet_amount
             self.num_bets_this_round += 1
 
         elif action.action == "RAISE":
+            self.current_player *= -1
             self.num_bets_this_round += 1
-            self.pot += action.bet_amount * 2
+            self.pot += action.bet_amount
 
     def get_possible_actions(self):
         if self.game_over:
             return []
         amount = self.get_bet_amounts()
         if self.num_bets_this_round == 0:
-            return [Action("FOLD"), Action("BET", amount)]
+            return [Action(1, "BET", amount)]
         elif self.num_bets_this_round == 1:
-            return [Action("FOLD"), Action("CALL", amount), Action("RAISE", amount)]
+            return [Action(-1, "FOLD"),
+                    Action(-1, "CALL", amount),
+                    Action(-1, "RAISE", amount)]
         elif self.num_bets_this_round == 2:
-            return [Action("FOLD"), Action("CALL", amount)]
+            return [Action(1, "FOLD"), Action(1, "CALL", amount)]
 
     def get_bet_amounts(self):
         if self.round == 1:
@@ -68,20 +76,22 @@ class Game:
         return random.choice(self.get_possible_actions())
 
     def reset(self):
+        self.button *= -1
         self.round = 1
+        self.current_player = -self.button
         self.num_bets_this_round = 0
         self.moves_record = list()
-        self.pot = 0
+        self.pot = 2
         self.game_over = False
         self.dealer.reset()
-        self.player_card = None
-        self.opponent_card = None
+        self.player_card = self.dealer.deal_private()[0]
+        self.opponent_card = self.dealer.deal_private()[1]
         self.public_card = None
 
 
 class Dealer:
     def __init__(self):
-        self.deck = [Card(13, 1), Card(13, 2), Card(12, 1), Card(12, 2), Card(11, 1), Card(11, 2)]
+        self.deck = [Card(14, 1), Card(14, 2), Card(13, 1), Card(13, 2), Card(12, 1), Card(12, 2)]
         random.shuffle(self.deck)
 
     def deal_private(self):

@@ -1,5 +1,4 @@
 from pycfr import hand_evaluator
-from pycfr.card import Card
 import random
 
 
@@ -20,26 +19,11 @@ class LeducState:
         return self.environment.get_possible_actions()
 
     def take_action(self, action):
-        # If (mcts) player folds:
-        # - Hand is over
-        # - Reward rendered is the -half the pot
-        # - Environment is reset
-        # - Return the state
-        # If player calls:
-        # - Round is incremented, bet added to pot etc
-        # - mcts player is next to act TODO: Store the player that is first to act
-        # - add action to the history and create the new state
-        # If player bets:
-        # - action added to history
-        # - random opponent acts
-        # - observation created based on opponents action, observation added to history
-        # -
-        # If player raises:
-        # - action added to history
-        # - random opponent must act next
-        # - observation made based on opponents actions
-        # - observation added to history
-        # -
+        if self.environment.debug:
+            if self.environment.current_player == 1:
+                print("PLAYER ACTION TAKEN: " + action.action)
+            else:
+                print("OPPONENT ACTION TAKEN: " + action.action)
         if action in self.environment.get_possible_actions():
             if action.action == "FOLD":
                 return self.get_state_after_fold(action)
@@ -47,7 +31,7 @@ class LeducState:
                 return self.get_state_after_call(action)
             elif action.action == "BET":
                 return self.get_state_after_bet(action)
-            elif action == "RAISE":
+            elif action.action == "RAISE":
                 return self.get_state_after_raise(action)
         else:
             raise InvalidActionException("The action chosen is not allowed in this state")
@@ -62,9 +46,10 @@ class LeducState:
 
     def get_state_after_fold(self, action):
         self.environment.update_state(action)
-        reward = -self.environment.pot
+        reward = -self.environment.pot*self.environment.current_player
         self.environment.reset()
-        return self.get_terminal_state(Action("Fold"), reward)
+        return self.get_terminal_state(Action(self.environment.current_player, "Fold"),
+                                       reward)
 
     def get_state_after_call(self, action):
         self.environment.update_state(action)
@@ -83,27 +68,7 @@ class LeducState:
                                       self.environment.public_card)
         next_history = self.history.copy() + [action, new_observation]
 
-        # Allow random opponent to make move
-        random_action = random.choice(self.get_possible_actions())
-        self.environment.update_state(random_action)
-
-        if random_action.action == "FOLD":
-            reward = self.environment.pot
-            self.environment.reset()
-            return self.get_terminal_state(random_action, reward)
-        elif random_action.action == "CALL":
-            if not self.environment.game_over:
-                return self.get_default_next_state(random_action, next_history)
-            else:
-                reward = self.get_showdown_reward()
-                self.environment.reset()
-                return self.get_terminal_state(random_action, reward)
-        elif random_action.action == "RAISE":
-            return self.get_default_next_state(random_action, next_history)
-
-        else:
-            raise InvalidActionException("The action " + action.action
-                                         + " was not expected here")
+        return self.get_default_next_state(action, next_history)
 
     def get_state_after_raise(self, action):
         self.environment.update_state(action)
@@ -113,12 +78,12 @@ class LeducState:
         pc = self.environment.player_card
         oc = self.environment.opponent_card
         pub = self.environment.public_card
-        if pub is None:
-            print("PUB NONE")
-        if pc is None:
-            print("PC NONE")
-        if oc is None:
-            print("OC NONE")
+        if self.environment.debug:
+            print("CARDS AT SHOWDOWN: ")
+            print("p: " + repr(pc))
+            print("o: " + repr(oc))
+            print("pub: " + repr(pub))
+
         hand_player = [pc, pub]
         hand_opponent = [oc, pub]
         player_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_player)
@@ -136,7 +101,8 @@ class LeducState:
         terminal_observation = Observation(None, None, None)
         next_history = history_copy + [action, terminal_observation]
         return LeducState(next_history, self.environment,
-                          reward=reward, is_terminal=True)
+                          reward=reward,
+                          is_terminal=True)
 
     def get_default_next_state(self, action, history):
         next_observation = Observation(action, self.environment.round,
@@ -146,7 +112,7 @@ class LeducState:
         return LeducState(history, self.environment)
 
     def __eq__(self, other):
-        raise NotImplementedError()
+        pass
 
 
 class Observation:
@@ -162,15 +128,29 @@ class Observation:
 
 
 class Action:
-    def __init__(self, action, bet_amount=None):
+    def __init__(self, player, action, bet_amount=None):
+        self.player = player
         self.action = action
         self.bet_amount = bet_amount
 
     def __eq__(self, other):
-        return other.action == self.action and other.bet_amount == self.bet_amount
+        return other.player == self.player and \
+               other.action == self.action and \
+               other.bet_amount == self.bet_amount
+
+    def __str__(self):
+        object_string = ""
+        if self.player:
+            object_string += "Player"
+        else:
+            object_string += "Opponent"
+        return str((object_string, self.action, self.bet_amount))
+
+    def __repr__(self):
+        return str(self)
 
     def __hash__(self):
-        return hash((self.action, self.bet_amount))
+        return hash((self.player, self.action, self.bet_amount))
 
 
 class InvalidStateException(Exception):
