@@ -47,6 +47,10 @@ class LeducState:
     def get_state_after_fold(self, action):
         self.environment.update_state(action)
         reward = -self.environment.pot*self.environment.current_player
+        if self.environment.current_player == 1:
+            self.environment.fold_count_player += 1
+        else:
+            self.environment.fold_count_opp += 1
         self.environment.reset()
         return self.get_terminal_state(Action(self.environment.current_player, "Fold"),
                                        reward)

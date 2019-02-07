@@ -29,6 +29,8 @@ class Game:
         self.opponent_card = self.dealer.deal_private()[1]
         self.public_card = None
         self.debug = debug
+        self.fold_count_player = 0
+        self.fold_count_opp = 0
 
     def update_state(self, action):
         if action.action == "FOLD":
