@@ -6,4 +6,5 @@ The algorithm is based on [this](https://papers.nips.cc/paper/4031-monte-carlo-p
 2010 paper by Silver and Veness.
 
 The outline of the algorithm is shown below:
+
 ![Algorithm](./algorithm.png)
