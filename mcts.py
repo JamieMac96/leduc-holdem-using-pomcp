@@ -1,62 +1,122 @@
 import time
 import math
-from leduc import sim
+import random
 from leduc import game
+from leduc import potree
+from matplotlib import pyplot as plt
 
-discount_factor = .99
-epsilon = .001
-tree = {}
-visitation_function = {}
-value_function = {}
+cumulative_reward = 0
+DISCOUNT_FACTOR = .95
+EPSILON = .01
+EXPLORATION_CONSTANT = 2
 environment = game.Game()
+tree = {"": potree.PoNode()}  # Root node of tree
 
 
 def search(history, time_limit=None, iterations=None):
     if time_limit is not None:
         time_limit = time.time() + time_limit / 1000
         while time.time() < time_limit:
-            execute_round(history, 0)
+            simulate(history, 0)
     elif iterations is not None:
         for i in range(iterations):
-            execute_round(history, 0)
+            simulate(history, 0)
+            environment.reset()
+        print_tree()
     else:
         raise ValueError("You must specify a time or iterations limit")
-    return None  # TODO: argmax(V(hb))
 
 
-def execute_round(history, depth):
-    if not history:
-        state = None  # TODO: acquire state from information state function
-    else:
-        state = None  # TODO: action state from belief state function
-    simulate(history, state, depth)
-
-
-def rollout(state, history, depth):
-    if math.pow(discount_factor, depth) < epsilon:
+def rollout(history, depth):
+    if math.pow(DISCOUNT_FACTOR, depth) < EPSILON:
         return 0
-    action = None  # TODO: Use rollout policy to acquire action
-    new_state, observation, reward = sim.generate_successor_tuple(state, action)
-    new_history = history + [action, observation]
-    return reward + rollout(new_state, new_history, depth+1)
-
-
-def simulate(state, history, depth):
-    if math.pow(discount_factor, depth) < epsilon:
+    actions = environment.get_possible_actions()
+    if not actions:
         return 0
+    action = random.choice(actions)  # Random rollout currently being used
+    observation, reward = environment.update_state(action)
+    new_history = history + action + observation
+    return reward + rollout(new_history, depth+1)
+
+
+def simulate(history, depth):
+    if environment.game_over:
+        environment.reset()
+        return 0
+    if math.pow(DISCOUNT_FACTOR, depth) < EPSILON:
+        return 0
+    if history == "":
+        new_history = environment.get_initial_state()
+        if new_history not in tree[history].children:
+            tree[history].children.add(new_history)
+        return simulate(new_history, depth+1)
     if history not in tree.keys():
-        for action in environment.get_possible_actions():
-            new_history = history + [action]
-            tree[new_history] = None  # TODO: apply default initial values to new history
-        return rollout(state, history, depth)
-
-    action = None  # TODO: argmax(V(hb) + c * sqrt(log(N(h))/N(hb)))
-    new_state, observation, reward = sim.generate_successor_tuple(state, action)
-    new_history = history + [action, observation]
-    reward_update = reward + simulate(new_state, new_history, depth+1)
-    new_belief_state = None  # TODO: B(h) = B(h) U {s}
-    visitation_function[history] += 1
-    visitation_function[new_history] += 1
-    value_function[new_history] += (reward_update - value_function[new_history]) / visitation_function[new_history]
+        expand(history)
+        return rollout(history, depth)
+    if len(tree[history].children) != len(environment.get_possible_actions()):
+        expand(history)
+    action = get_best_action_ucb(history)
+    observation, reward = environment.update_state(action)
+    new_history = history + action + observation
+    reward_update = reward + DISCOUNT_FACTOR * simulate(new_history, depth+1)
+    if new_history not in tree.keys():
+        tree[new_history] = potree.PoNode()
+    if new_history not in tree[history].children:
+        tree[history].children.add(new_history)
+    tree[history].visitation_count += 1
+    tree[new_history].visitation_count += 1
+    # new_belief_state = None  # TODO: B(h) = B(h) U {s}
+    tree[new_history].value += (reward_update - tree[new_history].value) / tree[new_history].visitation_count
     return reward_update
 
+
+def get_best_action_ucb(history):
+    if environment.current_player == -1:
+        return random.choice(environment.get_possible_actions())
+    else:
+        best_value = float('-inf')
+        best_action = None
+        for action in environment.get_possible_actions():
+            next_history = history + action
+            exploration_bonus = EXPLORATION_CONSTANT * \
+                            math.sqrt(math.log(tree[history].visitation_count) /
+                                      tree[next_history].visitation_count)
+            node_val = tree[next_history].value + exploration_bonus
+            if node_val > best_value:
+                best_action = action
+        return best_action
+
+
+def expand(history):
+    if history not in tree.keys():
+        tree[history] = potree.PoNode()
+    for action in environment.get_possible_actions():
+        new_history = history + action
+        tree[new_history] = potree.PoNode()
+        tree[history].children.add(new_history)
+
+
+def print_tree():
+    ace_total_value = 0
+    king_total_value = 0
+    queen_total_value = 0
+
+    for key in sorted(tree.keys()):
+        if "1A" in key:
+            ace_total_value += tree[key].value
+        if "1K" in key:
+            king_total_value += tree[key].value
+        if "1Q" in key:
+            queen_total_value += tree[key].value
+        print(key + ": " + str(tree[key]))
+
+    print("value of queen: " + str(queen_total_value))
+    print("value of king: " + str(king_total_value))
+    print("value of ace: " + str(ace_total_value))
+
+if __name__ == "__main__":
+    iterations = 1000
+    search("", iterations=iterations)
+    print("NUMBER OF ITERATIONS: " + str(iterations))
+    plt.plot(environment.indices, environment.rewards)
+    plt.show()

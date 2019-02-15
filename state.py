@@ -132,29 +132,22 @@ class Observation:
 
 
 class Action:
-    def __init__(self, player, action, bet_amount=None):
-        self.player = player
+    def __init__(self, action, bet_amount=None):
         self.action = action
         self.bet_amount = bet_amount
 
     def __eq__(self, other):
-        return other.player == self.player and \
-               other.action == self.action and \
+        return other.action == self.action and \
                other.bet_amount == self.bet_amount
 
     def __str__(self):
-        object_string = ""
-        if self.player:
-            object_string += "Player"
-        else:
-            object_string += "Opponent"
-        return str((object_string, self.action, self.bet_amount))
+        return str((self.action, self.bet_amount))
 
     def __repr__(self):
         return str(self)
 
     def __hash__(self):
-        return hash((self.player, self.action, self.bet_amount))
+        return hash((self.action, self.bet_amount))
 
 
 class InvalidStateException(Exception):
