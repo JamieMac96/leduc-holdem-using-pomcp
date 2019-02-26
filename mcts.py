@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 cumulative_reward = 0
 DISCOUNT_FACTOR = .95
 EPSILON = .01
-EXPLORATION_CONSTANT = 2
+EXPLORATION_CONSTANT = 18
 environment = game.Game()
 tree = {"": potree.PoNode()}  # Root node of tree
 
@@ -22,7 +22,6 @@ def search(history, time_limit=None, iterations=None):
         for i in range(iterations):
             simulate(history, 0)
             environment.reset()
-        print_tree()
     else:
         raise ValueError("You must specify a time or iterations limit")
 
@@ -61,11 +60,11 @@ def simulate(history, depth):
     reward_update = reward + DISCOUNT_FACTOR * simulate(new_history, depth+1)
     if new_history not in tree.keys():
         tree[new_history] = potree.PoNode()
+        tree[new_history].visitation_count = 1
     if new_history not in tree[history].children:
         tree[history].children.add(new_history)
     tree[history].visitation_count += 1
     tree[new_history].visitation_count += 1
-    # new_belief_state = None  # TODO: B(h) = B(h) U {s}
     tree[new_history].value += (reward_update - tree[new_history].value) / tree[new_history].visitation_count
     return reward_update
 
@@ -77,13 +76,15 @@ def get_best_action_ucb(history):
         best_value = float('-inf')
         best_action = None
         for action in environment.get_possible_actions():
+
             next_history = history + action
             exploration_bonus = EXPLORATION_CONSTANT * \
                             math.sqrt(math.log(tree[history].visitation_count) /
                                       tree[next_history].visitation_count)
             node_val = tree[next_history].value + exploration_bonus
-            if node_val > best_value:
+            if node_val >= best_value:
                 best_action = action
+                best_value = node_val
         return best_action
 
 
@@ -94,6 +95,16 @@ def expand(history):
         new_history = history + action
         tree[new_history] = potree.PoNode()
         tree[history].children.add(new_history)
+
+
+def manual_traverse_tree():
+    node = tree[""]
+    while node.children != {}:
+        print("----------------------------------------------------------------------------------")
+        for item in node.children:
+            print(item + ": " + str(tree[item]))
+        choice = input("choose the child you would like to select: ")
+        node = tree[choice]
 
 
 def print_tree():
@@ -115,8 +126,10 @@ def print_tree():
     print("value of ace: " + str(ace_total_value))
 
 if __name__ == "__main__":
-    iterations = 1000
+    iterations = 100000
     search("", iterations=iterations)
+    print_tree()
+    manual_traverse_tree()
     print("NUMBER OF ITERATIONS: " + str(iterations))
     plt.plot(environment.indices, environment.rewards)
     plt.show()

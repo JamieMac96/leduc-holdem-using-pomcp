@@ -10,9 +10,15 @@ from pycfr import hand_evaluator
 # first and second round, respectively. Both players start the
 # first round with 1 already in the pot
 
-# Note for the purpose of this game, a call with a bet value of 0
-# is considered equivalent to checking
-ACTIONS = ["FOLD", "CALL", "BET", "RAISE"]
+# f = fold
+# b = bet
+# C = call
+# r = raise
+BETS_ACTIONS_MAP = {
+    0: ["f", "b"],
+    1: ["f", "C", "r"],
+    2: ["f", "C"]
+}
 
 
 class Game:
@@ -34,6 +40,7 @@ class Game:
         self.count = 0
         self.rewards = list()
         self.indices = list()
+        self.last_action = None
 
     # updates the state of the game.
     # Returns the observation and reward received, if there is
@@ -46,12 +53,16 @@ class Game:
             self.rewards.append(self.cumulative_reward)
             self.count += 1
             self.indices.append(self.count)
-            return "O", self.reward
+            return "", self.reward
         elif action == "c":
+            self.current_player *= -1
+            self.last_action = "c"
+        elif action == "C":
             self.pot += self.get_bet_amounts()
             self.current_player = -self.button
             if self.round == 1:
                 self.round += 1
+                self.last_action = None
                 self.num_bets_this_round = 0
                 self.public_card = self.dealer.deal_public()
                 return self.public_card.__str__(), 0
@@ -62,7 +73,7 @@ class Game:
                 self.rewards.append(self.cumulative_reward)
                 self.count += 1
                 self.indices.append(self.count)
-                return "O", self.reward
+                return "", self.reward
         elif action == "b":
             self.num_bets_this_round += 1
             self.current_player *= -1
@@ -76,12 +87,10 @@ class Game:
     def get_possible_actions(self):
         if self.game_over:
             return []
-        if self.num_bets_this_round == 0:
-            return ["f", "b"]
-        elif self.num_bets_this_round == 1:
-            return ["f", "c", "r"]
-        elif self.num_bets_this_round == 2:
-            return ["f", "c"]
+        if self.last_action == "c":
+            self.last_action = None
+            return BETS_ACTIONS_MAP[1]
+        return BETS_ACTIONS_MAP[self.num_bets_this_round]
 
     def get_bet_amounts(self):
         if self.round == 1:
@@ -128,7 +137,7 @@ class Game:
         self.player_card = self.dealer.deal_private()[0]
         self.opponent_card = self.dealer.deal_private()[1]
         self.public_card = None
-
+        self.last_action = None
 
 
 class Dealer:
