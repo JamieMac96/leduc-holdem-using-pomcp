@@ -1,6 +1,5 @@
 from pycfr.card import Card
 import random
-from pycfr import hand_evaluator
 
 # In Leduc hold’em, the deck consists of two suits
 # with three cards in each suit. There are two rounds. In the
@@ -16,8 +15,8 @@ from pycfr import hand_evaluator
 # r = raise
 BETS_ACTIONS_MAP = {
     0: ["f", "b"],
-    1: ["f", "C", "r"],
-    2: ["f", "C"]
+    1: ["f", "c", "r"],
+    2: ["f", "c"]
 }
 
 
@@ -35,7 +34,6 @@ class Game:
         self.opponent_card = self.dealer.deal_private()[1]
         self.public_card = None
         self.debug = debug
-        self.reward = 0
         self.cumulative_reward = 0
         self.count = 0
         self.rewards = list()
@@ -48,16 +46,9 @@ class Game:
     def update_state(self, action):
         if action == "f":
             self.game_over = True
-            self.reward = -self.pot*self.current_player
-            self.cumulative_reward += self.reward
-            self.rewards.append(self.cumulative_reward)
             self.count += 1
             self.indices.append(self.count)
-            return "", self.reward
         elif action == "c":
-            self.current_player *= -1
-            self.last_action = "c"
-        elif action == "C":
             self.pot += self.get_bet_amounts()
             self.current_player = -self.button
             if self.round == 1:
@@ -65,15 +56,11 @@ class Game:
                 self.last_action = None
                 self.num_bets_this_round = 0
                 self.public_card = self.dealer.deal_public()
-                return self.public_card.__str__(), 0
+                return self.public_card.__str__()
             else:
                 self.game_over = True
-                self.reward = self.get_showdown_reward()
-                self.cumulative_reward += self.reward
-                self.rewards.append(self.cumulative_reward)
                 self.count += 1
                 self.indices.append(self.count)
-                return "", self.reward
         elif action == "b":
             self.num_bets_this_round += 1
             self.current_player *= -1
@@ -82,14 +69,11 @@ class Game:
             self.num_bets_this_round += 1
             self.current_player *= -1
             self.pot += self.get_bet_amounts()
-        return "", 0
+        return ""
 
     def get_possible_actions(self):
         if self.game_over:
             return []
-        if self.last_action == "c":
-            self.last_action = None
-            return BETS_ACTIONS_MAP[1]
         return BETS_ACTIONS_MAP[self.num_bets_this_round]
 
     def get_bet_amounts(self):
@@ -103,27 +87,6 @@ class Game:
 
     def get_initial_state(self):
         return str(-self.button) + str(self.player_card)
-
-    def get_showdown_reward(self):
-        pc = self.player_card
-        oc = self.opponent_card
-        pub = self.public_card
-        if self.debug:
-            print("CARDS AT SHOWDOWN: ")
-            print("p: " + repr(pc))
-            print("o: " + repr(oc))
-            print("pub: " + repr(pub))
-
-        hand_player = [pc, pub]
-        hand_opponent = [oc, pub]
-        player_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_player)
-        opp_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_opponent)
-
-        if player_val >= opp_val:
-            reward = self.pot
-        else:
-            reward = -self.pot
-        return reward
 
     def reset(self):
         self.button *= -1
