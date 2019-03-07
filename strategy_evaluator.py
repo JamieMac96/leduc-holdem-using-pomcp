@@ -1,9 +1,17 @@
+from leduc import game
+from leduc import potree
+
+EPSILON = .99
+policy = {}
+environment = game.Game()
+
+
 def calculate_exploitability(tree):
     pass
 
 
-def generate_strategy_from_tree():
-    pass
+def apply_mcts_strategy(tree):
+    strategy_applied = {"": potree.PoNode()}
 
 
 # Based on Lanctot et al 2011 (Computing approximate nash

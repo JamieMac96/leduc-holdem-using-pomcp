@@ -28,7 +28,6 @@ class Game:
         self.num_bets_this_round = 0
         self.moves_record = list()
         self.pot = 2  # initial blinds for each round are 2
-        self.game_over = False
         self.dealer = Dealer()
         self.player_card = self.dealer.deal_private()[0]
         self.opponent_card = self.dealer.deal_private()[1]
@@ -45,7 +44,6 @@ class Game:
     # no observation/reward then we return empty string/none
     def update_state(self, action):
         if action == "f":
-            self.game_over = True
             self.count += 1
             self.indices.append(self.count)
         elif action == "c":
@@ -58,7 +56,6 @@ class Game:
                 self.public_card = self.dealer.deal_public()
                 return self.public_card.__str__()
             else:
-                self.game_over = True
                 self.count += 1
                 self.indices.append(self.count)
         elif action == "b":
@@ -72,8 +69,6 @@ class Game:
         return ""
 
     def get_possible_actions(self):
-        if self.game_over:
-            return []
         return BETS_ACTIONS_MAP[self.num_bets_this_round]
 
     def get_bet_amounts(self):
@@ -85,8 +80,11 @@ class Game:
     def random_policy(self):
         return random.choice(self.get_possible_actions())
 
-    def get_initial_state(self):
+    def get_initial_state_player(self):
         return str(-self.button) + str(self.player_card)
+
+    def get_initial_state_public(self):
+        return str(-self.button) + str(self.player_card) + str(self.opponent_card)
 
     def reset(self):
         self.button *= -1
@@ -95,7 +93,6 @@ class Game:
         self.num_bets_this_round = 0
         self.moves_record = list()
         self.pot = 2
-        self.game_over = False
         self.dealer.reset()
         self.player_card = self.dealer.deal_private()[0]
         self.opponent_card = self.dealer.deal_private()[1]

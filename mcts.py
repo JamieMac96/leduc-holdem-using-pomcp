@@ -5,13 +5,14 @@ from matplotlib import pyplot as plt
 import seaborn as sbn
 from leduc import game
 from leduc import potree
-from pycfr import hand_evaluator
+from leduc import util
 
 DISCOUNT_FACTOR = .95
 EPSILON = .01
 EXPLORATION_CONSTANT = 18
 environment = game.Game()
-tree = {"": potree.PoNode()}  # Root node of tree
+player_tree = {"": potree.PoNode()}  # Root node of tree
+public_tree = {"": potree.PoNode()}
 
 
 def rollout_policy(actions):
@@ -40,8 +41,8 @@ def rollout(history):
 
 
 def simulate(history, out_of_tree=False):
-    if is_terminal(history):
-        reward = calculate_reward(history)
+    if util.is_terminal(history):
+        reward = util.calculate_reward(history, environment)
         environment.reset()
         environment.cumulative_reward += reward
         environment.rewards.append(environment.cumulative_reward)
@@ -50,7 +51,7 @@ def simulate(history, out_of_tree=False):
         return rollout(history)
     if history == "":
         return handle_initial_states(history)
-    if history not in tree.keys():
+    if history not in player_tree:
         expand(history)
         action = rollout_policy(environment.get_possible_actions())
         out_of_tree = True
@@ -59,7 +60,7 @@ def simulate(history, out_of_tree=False):
         action = get_best_action_ucb(history)
 
     new_history = get_next_history(history, action)
-    running_reward = calculate_reward(history) + DISCOUNT_FACTOR * simulate(new_history, out_of_tree)
+    running_reward = util.calculate_reward(history, environment) + DISCOUNT_FACTOR * simulate(new_history, out_of_tree)
     add_new_history(history, new_history)
     update(history, new_history, running_reward)
 
@@ -73,29 +74,27 @@ def get_next_history(history, action):
 
 
 def add_new_history(history, new_history):
-    if new_history not in tree.keys():
-        tree[new_history] = potree.PoNode()
-        tree[new_history].visitation_count = 1
-    if new_history not in tree[history].children:
-        tree[history].children.add(new_history)
+    if new_history not in player_tree.keys():
+        player_tree[new_history] = potree.PoNode()
+        player_tree[new_history].visitation_count = 1
+    player_tree[history].children.add(new_history)
 
 
 def update(history, new_history, running_reward):
-    tree[history].visitation_count += 1
-    tree[new_history].visitation_count += 1
-    tree[new_history].value += (running_reward - tree[new_history].value) / tree[new_history].visitation_count
+    player_tree[history].visitation_count += 1
+    player_tree[new_history].visitation_count += 1
+    player_tree[new_history].value += (running_reward - player_tree[new_history].value) / player_tree[new_history].visitation_count
 
 
 def handle_initial_states(history):
-    new_history = environment.get_initial_state()
-    tree[new_history] = potree.PoNode()
-    if new_history not in tree[history].children:
-        tree[history].children.add(new_history)
+    new_history = environment.get_initial_state_player()
+    player_tree[new_history] = potree.PoNode()
+    player_tree[history].children.add(new_history)
     return simulate(new_history)
 
 
 def ensure_node_is_expanded(history):
-    if len(tree[history].children) != len(environment.get_possible_actions()):
+    if len(player_tree[history].children) != len(environment.get_possible_actions()):
         expand(history)
 
 
@@ -109,9 +108,9 @@ def get_best_action_ucb(history):
 
             next_history = history + action
             exploration_bonus = EXPLORATION_CONSTANT * \
-                            math.sqrt(math.log(tree[history].visitation_count) /
-                                      tree[next_history].visitation_count)
-            node_val = tree[next_history].value + exploration_bonus
+                            math.sqrt(math.log(player_tree[history].visitation_count) /
+                                      player_tree[next_history].visitation_count)
+            node_val = player_tree[next_history].value + exploration_bonus
             if node_val >= best_value:
                 best_action = action
                 best_value = node_val
@@ -119,110 +118,14 @@ def get_best_action_ucb(history):
 
 
 def expand(history):
-    if history not in tree.keys():
-        tree[history] = potree.PoNode()
+    if history not in player_tree:
+        player_tree[history] = potree.PoNode()
+
     for action in environment.get_possible_actions():
         new_history = history + action
-        tree[new_history] = potree.PoNode()
-        tree[history].children.add(new_history)
-
-
-def is_terminal(history):
-    if history.endswith("f") or (history.endswith("c") and len(history) > 6):
-        return True
-    else:
-        return False
-
-
-def calculate_reward(history):
-    if not is_terminal(history):
-        return 0
-    reward = 2
-    round = 0
-    bet_amount = 2
-
-    # In terms of reward, a raise==2 calls. This also simplifies the algorithm
-    modified_history = history.replace("r", "cc")
-
-    for char in modified_history:
-        if char in {"Q", "K", "A"}:
-            round += 1
-        if char in {"c", "b"}:
-            reward += bet_amount * round
-
-    winner = get_winner(history)
-
-    return reward * winner
-
-
-def get_winner(history):
-    prefix = -1 if history.startswith("-1") else 1
-    if history.endswith("f"):
-        last_actions = get_last_history_actions(history)
-        index = last_actions.index("f")
-        if index % 2 == 0:
-            winner = -prefix
-        else:
-            winner = prefix
-        return winner
-    elif history.endswith("c"):
-        pc = environment.player_card
-        oc = environment.opponent_card
-        pub = environment.public_card
-
-        hand_player = [pc, pub]
-        hand_opponent = [oc, pub]
-        player_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_player)
-        opp_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_opponent)
-
-        if player_val >= opp_val:
-            return 1
-        else:
-            return -1
-
-
-def get_last_history_actions(history):
-    cards = ["Qh", "Kh", "Ah", "Qs", "Ks", "As"]
-    split_history = split(history, cards)
-    return split_history[len(split_history) - 1]
-
-
-def split(txt, seps):
-    default_sep = seps[0]
-
-    # we skip seps[0] because that's the default seperator
-    for sep in seps[1:]:
-        txt = txt.replace(sep, default_sep)
-    return [i.strip() for i in txt.split(default_sep)]
-
-
-def manual_traverse_tree():
-    node = tree[""]
-    while node.children != {}:
-        print("----------------------------------------------------------------------------------")
-        for item in node.children:
-            print(item + ": " + str(tree[item]))
-        choice = input("choose the child you would like to select: ")
-        node = tree[choice]
-
-
-def print_tree():
-    ace_total_value = 0
-    king_total_value = 0
-    queen_total_value = 0
-
-    for key in sorted(tree.keys()):
-        if "1A" in key:
-            ace_total_value += tree[key].value
-        if "1K" in key:
-            king_total_value += tree[key].value
-        if "1Q" in key:
-            queen_total_value += tree[key].value
-        print(key + ": " + str(tree[key]))
-
-    print("value of queen: " + str(queen_total_value))
-    print("value of king: " + str(king_total_value))
-    print("value of ace: " + str(ace_total_value))
+        if new_history not in player_tree:
+            player_tree[new_history] = potree.PoNode()
+        player_tree[history].children.add(new_history)
 
 
 if __name__ == "__main__":
@@ -235,7 +138,7 @@ if __name__ == "__main__":
         environment.cumulative_reward = 0
         environment.count = 0
         environment.indices = list()
-        tree = {"": potree.PoNode()}
+        player_tree = {"": potree.PoNode()}
         search("", iterations=iterations)
         list_of_rewards.append(environment.rewards)
 
@@ -252,6 +155,6 @@ if __name__ == "__main__":
     plt.ylabel("Cumulative reward")
 
     plt.show()
-    print_tree()
-    manual_traverse_tree()
+    util.print_tree(player_tree)
     print("NUMBER OF ITERATIONS: " + str(iterations))
+    util.manual_traverse_tree(player_tree)
