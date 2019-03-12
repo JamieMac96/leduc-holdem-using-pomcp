@@ -38,6 +38,15 @@ def calculate_reward(history, environment):
     return reward * winner
 
 
+def player(history):
+    prefix = -1 if history.startswith("-1") else 1
+    actions = get_last_history_actions(history)
+    if len(actions) % 2 == 0:
+        return prefix
+    else:
+        return -prefix
+
+
 def get_winner(history, environment):
     prefix = -1 if history.startswith("-1") else 1
     if history.endswith("f"):

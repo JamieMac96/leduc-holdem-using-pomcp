@@ -31,13 +31,13 @@ def search(history, time_limit=None, iterations=None):
         raise ValueError("You must specify a time or iterations limit")
 
 
-def rollout(history):
+def rollout(history, out_of_tree):
     if not environment.get_possible_actions():
         return 0
-    action = random.choice(environment.get_possible_actions())
+    action = rollout_policy(environment.get_possible_actions())
     observation = environment.update_state(action)
     new_history = history + action + observation
-    return simulate(new_history)
+    return simulate(new_history, out_of_tree)
 
 
 def simulate(history, out_of_tree=False):
@@ -48,7 +48,7 @@ def simulate(history, out_of_tree=False):
         environment.rewards.append(environment.cumulative_reward)
         return reward
     if out_of_tree:
-        return rollout(history)
+        return rollout(history, out_of_tree)
     if history == "":
         return handle_initial_states(history)
     if history not in player_tree:
@@ -98,6 +98,11 @@ def ensure_node_is_expanded(history):
         expand(history)
 
 
+# TODO: Change this function so that we are including
+# TODO: observations in next possible actions
+# TODO: eg 1Ahbr would have children:
+# TODO:     - 1AhbrcQh, 1AhbrcAs etc
+# TODO: not just 1Ahbrc, 1Ahbrf
 def get_best_action_ucb(history):
     if environment.current_player == -1:
         return random.choice(environment.get_possible_actions())
@@ -105,7 +110,6 @@ def get_best_action_ucb(history):
         best_value = float('-inf')
         best_action = None
         for action in environment.get_possible_actions():
-
             next_history = history + action
             exploration_bonus = EXPLORATION_CONSTANT * \
                             math.sqrt(math.log(player_tree[history].visitation_count) /
