@@ -1,4 +1,4 @@
-from pycfr import hand_evaluator
+import hand_evaluator
 
 
 def information_function(history, player):

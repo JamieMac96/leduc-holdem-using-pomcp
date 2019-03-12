@@ -1,4 +1,4 @@
-from pycfr.card import Card
+from card import Card
 import random
 
 # In Leduc hold’em, the deck consists of two suits

@@ -3,9 +3,9 @@ import math
 import random
 from matplotlib import pyplot as plt
 import seaborn as sbn
-from leduc import game
-from leduc import potree
-from leduc import util
+import game
+import potree
+import util
 
 DISCOUNT_FACTOR = .95
 EPSILON = .01

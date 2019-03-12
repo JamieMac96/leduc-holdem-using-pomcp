@@ -1,5 +1,5 @@
-from leduc import game
-from leduc import potree
+import game
+import potree
 
 EPSILON = .99
 policy = {}
