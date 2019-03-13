@@ -39,7 +39,7 @@ def calculate_reward(history, environment):
 
 
 def player(history):
-    prefix = -1 if history.startswith("-1") else 1
+    prefix = get_prefix(history)
     actions = get_last_history_actions(history)
     if len(actions) % 2 == 0:
         return prefix
@@ -48,7 +48,7 @@ def player(history):
 
 
 def get_winner(history, environment):
-    prefix = -1 if history.startswith("-1") else 1
+    prefix = get_prefix(history)
     if history.endswith("f"):
         last_actions = get_last_history_actions(history)
         index = last_actions.index("f")
@@ -86,6 +86,15 @@ def split(txt, seps):
     for sep in seps[1:]:
         txt = txt.replace(sep, default_sep)
     return [i.strip() for i in txt.split(default_sep)]
+
+
+def get_player_one_card(history):
+    prefix = get_prefix(history)
+    return history[1:3] if prefix == 1 else history[2:4]
+
+
+def get_prefix(history):
+    return -1 if history.startswith("-1") else 1
 
 
 def manual_traverse_tree(tree):

@@ -6,13 +6,13 @@ import seaborn as sbn
 import game
 import potree
 import util
+import strategy_evaluator
 
 DISCOUNT_FACTOR = .95
 EPSILON = .01
 EXPLORATION_CONSTANT = 18
 environment = game.Game()
 player_tree = {"": potree.PoNode()}  # Root node of tree
-public_tree = {"": potree.PoNode()}
 
 
 def rollout_policy(actions):
@@ -50,7 +50,7 @@ def simulate(history, out_of_tree=False):
     if out_of_tree:
         return rollout(history, out_of_tree)
     if history == "":
-        return handle_initial_states(history)
+        return handle_initial_states()
     if history not in player_tree:
         expand(history)
         action = rollout_policy(environment.get_possible_actions())
@@ -86,10 +86,10 @@ def update(history, new_history, running_reward):
     player_tree[new_history].value += (running_reward - player_tree[new_history].value) / player_tree[new_history].visitation_count
 
 
-def handle_initial_states(history):
+def handle_initial_states():
     new_history = environment.get_initial_state_player()
     player_tree[new_history] = potree.PoNode()
-    player_tree[history].children.add(new_history)
+    player_tree[""].children.add(new_history)
     return simulate(new_history)
 
 
@@ -133,7 +133,7 @@ def expand(history):
 
 
 if __name__ == "__main__":
-    iterations = 100000
+    iterations = 10000
     num_searches = 1
     sbn.set_style("darkgrid")
     list_of_rewards = list()
@@ -161,4 +161,5 @@ if __name__ == "__main__":
     plt.show()
     util.print_tree(player_tree)
     print("NUMBER OF ITERATIONS: " + str(iterations))
-    util.manual_traverse_tree(player_tree)
+
+    strategy_evaluator.calculate_exploitability(player_tree)
