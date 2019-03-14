@@ -133,7 +133,7 @@ def expand(history):
 
 
 if __name__ == "__main__":
-    iterations = 10000
+    iterations = 100000
     num_searches = 1
     sbn.set_style("darkgrid")
     list_of_rewards = list()
@@ -148,17 +148,17 @@ if __name__ == "__main__":
 
     avg_rewards = list()
     reward_sum = 0
-    for i in range(len(environment.indices)):
-        for reward in list_of_rewards:
-            reward_sum += reward[i]
-        avg_rewards.append(reward_sum / num_searches)
-        reward_sum = 0
+    # for i in range(len(environment.indices)):
+    #    for reward in list_of_rewards:
+    #        reward_sum += reward[i]
+    #    avg_rewards.append(reward_sum / num_searches)
+    #    reward_sum = 0
 
-    plt.plot(environment.indices, avg_rewards)
-    plt.xlabel("Iterations")
-    plt.ylabel("Cumulative reward")
+    # plt.plot(environment.indices, avg_rewards)
+    # plt.xlabel("Iterations")
+    # plt.ylabel("Cumulative reward")
 
-    plt.show()
+    # plt.show()
     util.print_tree(player_tree)
     print("NUMBER OF ITERATIONS: " + str(iterations))
 

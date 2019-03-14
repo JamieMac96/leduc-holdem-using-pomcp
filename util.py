@@ -1,3 +1,4 @@
+from card import Card
 import hand_evaluator
 
 
@@ -11,7 +12,8 @@ def information_function(history, player):
 
 
 def is_terminal(history):
-    if history.endswith("f") or (history.endswith("c") and len(history) > 6):
+    history_copy = history.replace("1", "")
+    if history_copy.endswith("f") or (history_copy.endswith("c") and len(history_copy) > 8):
         return True
     else:
         return False
@@ -38,7 +40,45 @@ def calculate_reward(history, environment):
     return reward * winner
 
 
+def calculate_reward_full_info(history):
+    if not is_terminal(history):
+        return 0
+    reward = 2
+    round = -1
+    bet_amount = 2
+
+    # In terms of reward, a raise==2 calls. This also simplifies the algorithm
+    modified_history = history.replace("r", "cc")
+
+    for char in modified_history:
+        if char in {"Q", "K", "A"}:
+            round += 1
+        if char in {"c", "b"}:
+            reward += bet_amount * round
+
+    if history.endswith("c"):
+        remove_items = ['1', '-', 'c', 'r', 'b', 'f']
+        cards = history.translate({ord(x): '' for x in remove_items})
+        print(history)
+        pc_rank, pc_suit = cards[0], cards[1]
+        oc_rank, oc_suit = cards[2], cards[3]
+        pub_rank, pub_suit = cards[4], cards[5]
+
+        pc = Card(Card.STRING_TO_RANK[pc_rank], Card.STRING_TO_SUIT[pc_suit])
+        oc = Card(Card.STRING_TO_RANK[oc_rank], Card.STRING_TO_SUIT[oc_suit])
+        pub = Card(Card.STRING_TO_RANK[pub_rank], Card.STRING_TO_SUIT[pub_suit])
+
+        winner = get_showdown_winner(pc, oc, pub)
+    else:
+        winner = get_fold_winner(history)
+
+    return reward * winner
+
+
 def player(history):
+    if history == "":
+        return 0  # Chance node
+
     prefix = get_prefix(history)
     actions = get_last_history_actions(history)
     if len(actions) % 2 == 0:
@@ -48,29 +88,37 @@ def player(history):
 
 
 def get_winner(history, environment):
-    prefix = get_prefix(history)
     if history.endswith("f"):
-        last_actions = get_last_history_actions(history)
-        index = last_actions.index("f")
-        if index % 2 == 0:
-            winner = -prefix
-        else:
-            winner = prefix
-        return winner
+        return get_fold_winner(history)
     elif history.endswith("c"):
         pc = environment.player_card
         oc = environment.opponent_card
         pub = environment.public_card
 
-        hand_player = [pc, pub]
-        hand_opponent = [oc, pub]
-        player_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_player)
-        opp_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_opponent)
+        return get_showdown_winner(pc, oc, pub)
 
-        if player_val >= opp_val:
-            return 1
-        else:
-            return -1
+
+def get_showdown_winner(pc, oc, pub):
+    hand_player = [pc, pub]
+    hand_opponent = [oc, pub]
+    player_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_player)
+    opp_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_opponent)
+
+    if player_val >= opp_val:
+        return 1
+    else:
+        return -1
+
+
+def get_fold_winner(history):
+    prefix = get_prefix(history)
+    last_actions = get_last_history_actions(history)
+    index = last_actions.index("f")
+    if index % 2 == 0:
+        winner = -prefix
+    else:
+        winner = prefix
+    return winner
 
 
 def get_last_history_actions(history):
@@ -91,6 +139,20 @@ def split(txt, seps):
 def get_player_one_card(history):
     prefix = get_prefix(history)
     return history[1:3] if prefix == 1 else history[2:4]
+
+
+def get_best_child(tree, history):
+    if history not in tree or not tree[history].children:
+        return None
+
+    best_child = None
+    best_value = float('-inf')
+    for child in tree[history].children:
+        if tree[child].value > best_value:
+            best_value = tree[child].value
+            best_child = child
+
+    return best_child
 
 
 def get_prefix(history):
