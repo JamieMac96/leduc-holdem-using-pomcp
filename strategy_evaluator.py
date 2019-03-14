@@ -13,6 +13,7 @@ def calculate_exploitability(tree):
     best_response_tree = {}
     best_response_tree = apply_mcts_strategy(tree, full_tree, best_response_tree, "")
     evaluate_terminals(best_response_tree)
+    add_parents(best_response_tree)
     propogate_rewards(best_response_tree)
     util.print_tree(best_response_tree)
 
@@ -25,6 +26,7 @@ def generate_full_game_tree(tree, current_history):
     return full_tree
 
 
+# TODO: handle parent nodes
 def apply_mcts_strategy(tree, full_tree, best_response_tree, current_history):
     best_response_tree[current_history] = potree.PoNode()
     histories = full_tree[current_history].children
@@ -34,8 +36,10 @@ def apply_mcts_strategy(tree, full_tree, best_response_tree, current_history):
         best_child = util.get_best_child(tree, player_history)
         if best_child is not None:
             action = best_child.replace(player_history, "")
-            best_response_tree[current_history + action] = potree.PoNode()
+            histories = [current_history + action]
             best_response_tree[current_history].children = {current_history + action}
+        else:
+            histories = []
     else:
         best_response_tree[current_history].children = set(histories)
 
@@ -51,8 +55,15 @@ def evaluate_terminals(best_response_tree):
             best_response_tree[history].value = util.calculate_reward_full_info(history)
 
 
+def add_parents(best_response_tree):
+    for history, node in best_response_tree.items():
+        for child in node.children:
+            child.parent = history
+
+
 def propogate_rewards(best_response_tree):
-    pass
+    for item, node in best_response_tree:
+        pass
 
 
 def generate_full_tree_branching(tree, current_history):

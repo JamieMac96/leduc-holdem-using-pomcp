@@ -159,6 +159,10 @@ def get_prefix(history):
     return -1 if history.startswith("-1") else 1
 
 
+def calculate_average_reward_for_player_terminal(history, player):
+    pass
+
+
 def manual_traverse_tree(tree):
     node = tree[""]
     while node.children != {}:
