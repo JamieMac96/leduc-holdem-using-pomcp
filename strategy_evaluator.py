@@ -16,6 +16,7 @@ def calculate_exploitability(tree):
     add_parents(best_response_tree)
     propogate_rewards(best_response_tree)
     util.print_tree(best_response_tree)
+    util.manual_traverse_tree(best_response_tree)
 
 
 def generate_full_game_tree(tree, current_history):
@@ -26,14 +27,16 @@ def generate_full_game_tree(tree, current_history):
     return full_tree
 
 
-# TODO: handle parent nodes
 def apply_mcts_strategy(tree, full_tree, best_response_tree, current_history):
+    if current_history not in full_tree:
+        return best_response_tree
+
     best_response_tree[current_history] = potree.PoNode()
     histories = full_tree[current_history].children
 
     if util.player(current_history) == 1:
         player_history = util.information_function(current_history, 1)
-        best_child = util.get_best_child(tree, player_history)
+        best_child = util.get_best_child(tree, player_history)  # TODO: have chance as separate player/independent nodes
         if best_child is not None:
             action = best_child.replace(player_history, "")
             histories = [current_history + action]
@@ -58,12 +61,33 @@ def evaluate_terminals(best_response_tree):
 def add_parents(best_response_tree):
     for history, node in best_response_tree.items():
         for child in node.children:
-            child.parent = history
+            # TODO: Fix error that is forcing this check
+            if child in best_response_tree:
+                best_response_tree[child].parent = history
 
 
 def propogate_rewards(best_response_tree):
-    for item, node in best_response_tree:
-        pass
+    leaf_parents = list()
+
+    for history, node in best_response_tree.items():
+        if util.is_terminal(history):
+            parent = node.parent
+            leaf_parents.append(parent)
+            eq_nodes = util.get_information_equivalent_nodes(best_response_tree, history, -1)
+            average_reward = util.average_reward(eq_nodes)
+            best_response_tree[parent].value = average_reward
+
+    for history in leaf_parents:
+        propogate_rewards_recursive(best_response_tree, history)
+
+
+def propogate_rewards_recursive(best_response_tree, node):
+    if node == "":
+        return
+    parent = best_response_tree[node].parent
+    best_sibling = util.get_best_child(best_response_tree, parent, player=-1)
+    best_response_tree[parent].value = best_response_tree[best_sibling].value
+    propogate_rewards_recursive(best_response_tree, parent)
 
 
 def generate_full_tree_branching(tree, current_history):

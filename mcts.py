@@ -59,18 +59,15 @@ def simulate(history, out_of_tree=False):
         ensure_node_is_expanded(history)
         action = get_best_action_ucb(history)
 
-    new_history = get_next_history(history, action)
+    observation = environment.update_state(action)
+    new_history = history + action
     running_reward = util.calculate_reward(history, environment) + DISCOUNT_FACTOR * simulate(new_history, out_of_tree)
     add_new_history(history, new_history)
+    if observation != "":
+        add_new_history(new_history, new_history + observation)
     update(history, new_history, running_reward)
 
     return running_reward
-
-
-def get_next_history(history, action):
-    observation = environment.update_state(action)
-    new_history = history + action + observation
-    return new_history
 
 
 def add_new_history(history, new_history):
@@ -133,7 +130,7 @@ def expand(history):
 
 
 if __name__ == "__main__":
-    iterations = 100000
+    iterations = 10000
     num_searches = 1
     sbn.set_style("darkgrid")
     list_of_rewards = list()
@@ -161,5 +158,5 @@ if __name__ == "__main__":
     # plt.show()
     util.print_tree(player_tree)
     print("NUMBER OF ITERATIONS: " + str(iterations))
-
+    util.manual_traverse_tree(player_tree)
     strategy_evaluator.calculate_exploitability(player_tree)

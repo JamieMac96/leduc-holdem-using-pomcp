@@ -59,7 +59,6 @@ def calculate_reward_full_info(history):
     if history.endswith("c"):
         remove_items = ['1', '-', 'c', 'r', 'b', 'f']
         cards = history.translate({ord(x): '' for x in remove_items})
-        print(history)
         pc_rank, pc_suit = cards[0], cards[1]
         oc_rank, oc_suit = cards[2], cards[3]
         pub_rank, pub_suit = cards[4], cards[5]
@@ -141,15 +140,15 @@ def get_player_one_card(history):
     return history[1:3] if prefix == 1 else history[2:4]
 
 
-def get_best_child(tree, history):
+def get_best_child(tree, history, player=1):
     if history not in tree or not tree[history].children:
         return None
 
     best_child = None
     best_value = float('-inf')
     for child in tree[history].children:
-        if tree[child].value > best_value:
-            best_value = tree[child].value
+        if tree[child].value * player > best_value:
+            best_value = tree[child].value * player
             best_child = child
 
     return best_child
@@ -159,8 +158,36 @@ def get_prefix(history):
     return -1 if history.startswith("-1") else 1
 
 
-def calculate_average_reward_for_player_terminal(history, player):
-    pass
+def get_information_equivalent_nodes(tree, history, player):
+    cards = ["Ah", "As", "Kh", "Ks", "Qh", "Qs"]
+    prefix = get_prefix(history)
+    player_history = information_function(history, player)
+    print(player)
+    history_copy = player_history.replace(str(prefix), "")
+
+    player_card = history_copy[0:2]
+    print(player_card)
+    cards.remove(player_card)
+
+    information_equivalent_histories = list()
+    for card in cards:
+        if player == 1:
+            eq_history = str(prefix) + history_copy[0:2] + card + history_copy[2:]
+        else:
+            eq_history = str(prefix) + card + history_copy
+        if eq_history in tree:
+            information_equivalent_histories.append(eq_history)
+
+    return information_equivalent_histories
+
+
+def average_reward(histories):
+    reward_sum = float()
+
+    for history in histories:
+        reward_sum += calculate_reward_full_info(history)
+
+    return reward_sum / len(histories)
 
 
 def manual_traverse_tree(tree):
