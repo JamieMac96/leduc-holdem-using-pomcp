@@ -13,7 +13,7 @@ def information_function(history, player):
 
 def is_terminal(history):
     history_copy = history.replace("1", "")
-    if history_copy.endswith("f") or (history_copy.endswith("c") and len(history_copy) > 8):
+    if history_copy.endswith("f") or (history_copy.endswith("c") and history.count("c") > 1):
         return True
     else:
         return False
@@ -75,7 +75,7 @@ def calculate_reward_full_info(history):
 
 
 def player(history):
-    if history == "":
+    if history == "" or (not is_terminal(history) and history.endswith("c")):
         return 0  # Chance node
 
     prefix = get_prefix(history)
@@ -90,10 +90,9 @@ def get_winner(history, environment):
     if history.endswith("f"):
         return get_fold_winner(history)
     elif history.endswith("c"):
-        pc = environment.player_card
-        oc = environment.opponent_card
-        pub = environment.public_card
-
+        pc = environment.dealer.deal_private()[0]
+        oc = environment.dealer.deal_private()[1]
+        pub = environment.dealer.deal_public()
         return get_showdown_winner(pc, oc, pub)
 
 
@@ -154,6 +153,14 @@ def get_best_child(tree, history, player=1):
     return best_child
 
 
+def get_average_child_value(tree, history):
+    value_sum = float()
+    for child in tree[history].children:
+        value_sum += tree[child].value
+
+    return value_sum / len(tree[history].children)
+
+
 def get_prefix(history):
     return -1 if history.startswith("-1") else 1
 
@@ -162,11 +169,8 @@ def get_information_equivalent_nodes(tree, history, player):
     cards = ["Ah", "As", "Kh", "Ks", "Qh", "Qs"]
     prefix = get_prefix(history)
     player_history = information_function(history, player)
-    print(player)
     history_copy = player_history.replace(str(prefix), "")
-
     player_card = history_copy[0:2]
-    print(player_card)
     cards.remove(player_card)
 
     information_equivalent_histories = list()
@@ -179,6 +183,17 @@ def get_information_equivalent_nodes(tree, history, player):
             information_equivalent_histories.append(eq_history)
 
     return information_equivalent_histories
+
+
+def get_available_actions(history):
+    if history.endswith("b"):
+        return ["f", "c", "r"]
+    elif history.endswith("r"):
+        return ["c", "f"]
+    elif history.endswith("h") or history.endswith("s"):
+        return ["b", "f"]
+    else:
+        return []
 
 
 def average_reward(histories):

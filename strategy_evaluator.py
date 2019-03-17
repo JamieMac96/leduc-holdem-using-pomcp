@@ -15,8 +15,9 @@ def calculate_exploitability(tree):
     evaluate_terminals(best_response_tree)
     add_parents(best_response_tree)
     propogate_rewards(best_response_tree)
-    util.print_tree(best_response_tree)
-    util.manual_traverse_tree(best_response_tree)
+    # util.print_tree(best_response_tree)
+    # util.manual_traverse_tree(best_response_tree)
+    return best_response_tree[""].value
 
 
 def generate_full_game_tree(tree, current_history):
@@ -81,12 +82,16 @@ def propogate_rewards(best_response_tree):
         propogate_rewards_recursive(best_response_tree, history)
 
 
-def propogate_rewards_recursive(best_response_tree, node):
-    if node == "":
+def propogate_rewards_recursive(best_response_tree, history):
+    if history == "":
         return
-    parent = best_response_tree[node].parent
-    best_sibling = util.get_best_child(best_response_tree, parent, player=-1)
-    best_response_tree[parent].value = best_response_tree[best_sibling].value
+    parent = best_response_tree[history].parent
+    if util.player(parent) == 0:
+        value_to_propogate = util.get_average_child_value(best_response_tree, parent)
+    else:
+        best_sibling = util.get_best_child(best_response_tree, parent, player=-1)
+        value_to_propogate = best_response_tree[best_sibling].value
+    best_response_tree[parent].value = value_to_propogate
     propogate_rewards_recursive(best_response_tree, parent)
 
 

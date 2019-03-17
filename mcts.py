@@ -13,6 +13,8 @@ EPSILON = .01
 EXPLORATION_CONSTANT = 18
 environment = game.Game()
 player_tree = {"": potree.PoNode()}  # Root node of tree
+iterations_list = []
+exploitability_values = list()
 
 
 def rollout_policy(actions):
@@ -27,16 +29,20 @@ def search(history, time_limit=None, iterations=None):
     elif iterations is not None:
         for i in range(iterations):
             simulate(history)
+            if i % 1000 == 0 and i != 0:
+                value = strategy_evaluator.calculate_exploitability(player_tree)
+                exploitability_values.append(-value)
+                iterations_list.append(i)
     else:
         raise ValueError("You must specify a time or iterations limit")
 
 
 def rollout(history, out_of_tree):
-    if not environment.get_possible_actions():
-        return 0
-    action = rollout_policy(environment.get_possible_actions())
-    observation = environment.update_state(action)
-    new_history = history + action + observation
+    if util.player(history) == 0:
+        action = str(environment.dealer.deal_public())
+    else:
+        action = rollout_policy(util.get_available_actions(history))
+    new_history = history + action
     return simulate(new_history, out_of_tree)
 
 
@@ -53,18 +59,14 @@ def simulate(history, out_of_tree=False):
         return handle_initial_states()
     if history not in player_tree:
         expand(history)
-        action = rollout_policy(environment.get_possible_actions())
+        action = rollout_policy(util.get_available_actions(history))
         out_of_tree = True
     else:
         ensure_node_is_expanded(history)
         action = get_best_action_ucb(history)
-
-    observation = environment.update_state(action)
     new_history = history + action
     running_reward = util.calculate_reward(history, environment) + DISCOUNT_FACTOR * simulate(new_history, out_of_tree)
     add_new_history(history, new_history)
-    if observation != "":
-        add_new_history(new_history, new_history + observation)
     update(history, new_history, running_reward)
 
     return running_reward
@@ -91,22 +93,17 @@ def handle_initial_states():
 
 
 def ensure_node_is_expanded(history):
-    if len(player_tree[history].children) != len(environment.get_possible_actions()):
+    if len(player_tree[history].children) != len(util.get_available_actions(history)):
         expand(history)
 
 
-# TODO: Change this function so that we are including
-# TODO: observations in next possible actions
-# TODO: eg 1Ahbr would have children:
-# TODO:     - 1AhbrcQh, 1AhbrcAs etc
-# TODO: not just 1Ahbrc, 1Ahbrf
 def get_best_action_ucb(history):
-    if environment.current_player == -1:
-        return random.choice(environment.get_possible_actions())
-    else:
+    if util.player(history) == -1:
+        return random.choice(util.get_available_actions(history))
+    elif util.player(history) == 1:
         best_value = float('-inf')
         best_action = None
-        for action in environment.get_possible_actions():
+        for action in util.get_available_actions(history):
             next_history = history + action
             exploration_bonus = EXPLORATION_CONSTANT * \
                             math.sqrt(math.log(player_tree[history].visitation_count) /
@@ -116,13 +113,15 @@ def get_best_action_ucb(history):
                 best_action = action
                 best_value = node_val
         return best_action
+    else:
+        return str(environment.dealer.deal_public())
 
 
 def expand(history):
     if history not in player_tree:
         player_tree[history] = potree.PoNode()
 
-    for action in environment.get_possible_actions():
+    for action in util.get_available_actions(history):
         new_history = history + action
         if new_history not in player_tree:
             player_tree[new_history] = potree.PoNode()
@@ -130,7 +129,7 @@ def expand(history):
 
 
 if __name__ == "__main__":
-    iterations = 10000
+    iteration_count = 1000000
     num_searches = 1
     sbn.set_style("darkgrid")
     list_of_rewards = list()
@@ -140,7 +139,7 @@ if __name__ == "__main__":
         environment.count = 0
         environment.indices = list()
         player_tree = {"": potree.PoNode()}
-        search("", iterations=iterations)
+        search("", iterations=iteration_count)
         list_of_rewards.append(environment.rewards)
 
     avg_rewards = list()
@@ -150,13 +149,17 @@ if __name__ == "__main__":
     #        reward_sum += reward[i]
     #    avg_rewards.append(reward_sum / num_searches)
     #    reward_sum = 0
+    for i in range(20):
+        exploitability_values.pop(i)
+        iterations_list.pop(i)
+    for i in range(len(exploitability_values)):
+        print("iteration: " + str(iterations_list[i]))
+        print("exploitability: " + str(exploitability_values[i]))
+        print("-------------------------------------------------------")
+    plt.plot(iterations_list, exploitability_values)
+    plt.xlabel("Iterations")
+    plt.ylabel("Exploitability")
 
-    # plt.plot(environment.indices, avg_rewards)
-    # plt.xlabel("Iterations")
-    # plt.ylabel("Cumulative reward")
-
-    # plt.show()
+    plt.show()
     util.print_tree(player_tree)
-    print("NUMBER OF ITERATIONS: " + str(iterations))
-    util.manual_traverse_tree(player_tree)
-    strategy_evaluator.calculate_exploitability(player_tree)
+    print("NUMBER OF ITERATIONS: " + str(iteration_count))
