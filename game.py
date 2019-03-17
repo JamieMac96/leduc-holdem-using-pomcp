@@ -29,31 +29,6 @@ class Game:
         self.opponent_card = self.dealer.deal_private()[1]
         self.public_card = None
         self.debug = debug
-        self.cumulative_reward = 0
-        self.count = 0
-        self.rewards = list()
-        self.indices = list()
-
-    # updates the state of the game.
-    # Returns the observation and reward received, if there is
-    # no observation/reward then we return empty string/none
-    def update_state(self, action):
-        if action == "f":
-            self.count += 1
-            self.indices.append(self.count)
-        elif action == "c":
-            self.current_player = -self.button
-            if self.round == 1:
-                self.public_card = self.dealer.deal_public()
-                return self.public_card.__str__()
-            else:
-                self.count += 1
-                self.indices.append(self.count)
-        elif action == "b":
-            self.current_player *= -1
-        elif action == "r":
-            self.current_player *= -1
-        return ""
 
     def get_initial_state_player(self):
         return str(-self.button) + str(self.player_card)

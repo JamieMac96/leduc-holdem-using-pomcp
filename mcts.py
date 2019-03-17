@@ -1,7 +1,6 @@
 import time
 import math
 import random
-from matplotlib import pyplot as plt
 import seaborn as sbn
 import game
 import potree
@@ -30,9 +29,10 @@ def search(history, time_limit=None, iterations=None):
         for i in range(iterations):
             simulate(history)
             if i % 1000 == 0 and i != 0:
-                value = strategy_evaluator.calculate_exploitability(player_tree)
-                exploitability_values.append(-value)
-                iterations_list.append(i)
+                pass
+                #value = strategy_evaluator.calculate_exploitability(player_tree)
+                #exploitability_values.append(-value)
+                #iterations_list.append(i)
     else:
         raise ValueError("You must specify a time or iterations limit")
 
@@ -52,6 +52,8 @@ def simulate(history, out_of_tree=False):
         environment.reset()
         environment.cumulative_reward += reward
         environment.rewards.append(environment.cumulative_reward)
+        environment.indices.append(environment.count)
+        environment.count += 1
         return reward
     if out_of_tree:
         return rollout(history, out_of_tree)
@@ -129,8 +131,8 @@ def expand(history):
 
 
 if __name__ == "__main__":
-    iteration_count = 1000000
-    num_searches = 1
+    iteration_count = 200000
+    num_searches = 10
     sbn.set_style("darkgrid")
     list_of_rewards = list()
     for i in range(num_searches):
@@ -144,22 +146,26 @@ if __name__ == "__main__":
 
     avg_rewards = list()
     reward_sum = 0
-    # for i in range(len(environment.indices)):
-    #    for reward in list_of_rewards:
-    #        reward_sum += reward[i]
-    #    avg_rewards.append(reward_sum / num_searches)
-    #    reward_sum = 0
-    for i in range(20):
-        exploitability_values.pop(i)
-        iterations_list.pop(i)
-    for i in range(len(exploitability_values)):
-        print("iteration: " + str(iterations_list[i]))
-        print("exploitability: " + str(exploitability_values[i]))
-        print("-------------------------------------------------------")
-    plt.plot(iterations_list, exploitability_values)
-    plt.xlabel("Iterations")
-    plt.ylabel("Exploitability")
+    for i in range(len(environment.indices)):
+        for reward in list_of_rewards:
+            reward_sum += reward[i]
+        avg_rewards.append(reward_sum / num_searches)
+        reward_sum = 0
+    # for i in range(20):
+    #    exploitability_values.pop(i)
+    #    iterations_list.pop(i)
 
-    plt.show()
+    slope_values = list()
+    slope_indices = list()
+
+    for i in range(len(avg_rewards)):
+        if i % 1000 == 0 and i != 0:
+            slope = (avg_rewards[i] - avg_rewards[i-1000]) / 1000
+            slope_indices.append(i)
+            slope_values.append(slope)
+
+    # util.show_graph(iterations_list, exploitability_values, "Iterations", "Exploitability")
+    # util.show_graph(environment.indices, avg_rewards, "Iterations", "Cumulative Reward")
+    util.show_graph(slope_indices, slope_values, "Iterations", "Slope - Cumulative Reward")
     util.print_tree(player_tree)
     print("NUMBER OF ITERATIONS: " + str(iteration_count))

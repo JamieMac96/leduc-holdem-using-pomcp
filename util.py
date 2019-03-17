@@ -1,5 +1,6 @@
 from card import Card
 import hand_evaluator
+from matplotlib import pyplot as plt
 
 
 def information_function(history, player):
@@ -232,3 +233,10 @@ def print_tree(tree):
     print("value of queen: " + str(queen_total_value))
     print("value of king: " + str(king_total_value))
     print("value of ace: " + str(ace_total_value))
+
+
+def show_graph(x_items, y_items, x_label, y_label):
+    plt.plot(x_items, y_items)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.show()
