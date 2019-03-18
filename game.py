@@ -30,10 +30,7 @@ class Game:
         self.public_card = None
         self.debug = debug
 
-    def get_initial_state_player(self):
-        return str(-self.button) + str(self.player_card)
-
-    def get_initial_state_public(self):
+    def get_initial_state(self):
         return str(-self.button) + str(self.player_card) + str(self.opponent_card)
 
     def reset(self):

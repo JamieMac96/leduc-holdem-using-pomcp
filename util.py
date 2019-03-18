@@ -9,7 +9,7 @@ def information_function(history, player):
     if player == -1:
         return prefix + history_no_prefix[2:]
     else:
-        return history[:2] + history[4:]
+        return prefix + history_no_prefix[:2] + history_no_prefix[4:]
 
 
 def is_terminal(history):
@@ -188,11 +188,17 @@ def get_information_equivalent_nodes(tree, history, player):
 
 def get_available_actions(history):
     if history.endswith("b"):
-        return ["f", "c", "r"]
+        return ["c", "r", "f"]
     elif history.endswith("r"):
         return ["c", "f"]
     elif history.endswith("h") or history.endswith("s"):
         return ["b", "f"]
+    elif history.endswith("c"):
+        cards = ["Ah", "As", "Kh", "Ks", "Qh", "Qs"]
+        for item in cards:
+            if item in history:
+                cards.remove(item)
+        return cards
     else:
         return []
 
