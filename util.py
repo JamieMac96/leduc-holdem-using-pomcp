@@ -20,27 +20,6 @@ def is_terminal(history):
         return False
 
 
-def calculate_reward(history, environment):
-    if not is_terminal(history):
-        return 0
-    reward = 2
-    round = 0
-    bet_amount = 2
-
-    # In terms of reward, a raise==2 calls. This also simplifies the algorithm
-    modified_history = history.replace("r", "cc")
-
-    for char in modified_history:
-        if char in {"Q", "K", "A"}:
-            round += 1
-        if char in {"c", "b"}:
-            reward += bet_amount * round
-
-    winner = get_winner(history, environment)
-
-    return reward * winner
-
-
 def calculate_reward_full_info(history):
     if not is_terminal(history):
         return 0
@@ -154,6 +133,25 @@ def get_best_child(tree, history, player=1):
     return best_child
 
 
+def get_best_child_full_tree(tree, history, player=1):
+    if history not in tree or not tree[history].children:
+        return None
+
+    best_child = None
+    best_value = float('-inf')
+    for child in tree[history].children:
+        eq_nodes = get_information_equivalent_nodes(tree, child, player)
+        total_val = float()
+        for node in eq_nodes:
+            total_val += tree[node].value
+        avg = total_val / len(eq_nodes)
+        if avg * player > best_value:
+            best_value = avg * player
+            best_child = child
+
+    return best_child
+
+
 def get_average_child_value(tree, history):
     value_sum = float()
     for child in tree[history].children:
@@ -193,7 +191,7 @@ def get_available_actions(history):
         return ["c", "f"]
     elif history.endswith("h") or history.endswith("s"):
         return ["b", "f"]
-    elif history.endswith("c"):
+    elif history.endswith("c") and not is_terminal(history):
         cards = ["Ah", "As", "Kh", "Ks", "Qh", "Qs"]
         for item in cards:
             if item in history:

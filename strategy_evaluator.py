@@ -14,7 +14,7 @@ def calculate_exploitability(tree):
     best_response_tree = apply_mcts_strategy(tree, full_tree, best_response_tree, "")
     evaluate_terminals(best_response_tree)
     add_parents(best_response_tree)
-    propogate_rewards(best_response_tree)
+    propagate_rewards(best_response_tree)
     # util.print_tree(best_response_tree)
     # util.manual_traverse_tree(best_response_tree)
     return best_response_tree[""].value
@@ -67,32 +67,35 @@ def add_parents(best_response_tree):
                 best_response_tree[child].parent = history
 
 
-def propogate_rewards(best_response_tree):
+def propagate_rewards(best_response_tree):
     leaf_parents = list()
 
     for history, node in best_response_tree.items():
         if util.is_terminal(history):
             parent = node.parent
             leaf_parents.append(parent)
-            eq_nodes = util.get_information_equivalent_nodes(best_response_tree, history, -1)
-            average_reward = util.average_reward(eq_nodes)
-            best_response_tree[parent].value = average_reward
+            if util.player(history) == 1:
+                eq_nodes = util.get_information_equivalent_nodes(best_response_tree, history, -1)
+                average_reward = util.average_reward(eq_nodes)
+                best_response_tree[parent].value = average_reward
+            else:
+                best_response_tree[parent].value = best_response_tree[history].value
 
     for history in leaf_parents:
-        propogate_rewards_recursive(best_response_tree, history)
+        propagate_rewards_recursive(best_response_tree, history)
 
 
-def propogate_rewards_recursive(best_response_tree, history):
+def propagate_rewards_recursive(best_response_tree, history):
     if history == "":
         return
     parent = best_response_tree[history].parent
     if util.player(parent) == 0:
-        value_to_propogate = util.get_average_child_value(best_response_tree, parent)
+        value_to_propagate = util.get_average_child_value(best_response_tree, parent)
     else:
-        best_sibling = util.get_best_child(best_response_tree, parent, player=-1)
-        value_to_propogate = best_response_tree[best_sibling].value
-    best_response_tree[parent].value = value_to_propogate
-    propogate_rewards_recursive(best_response_tree, parent)
+        best_sibling = util.get_best_child_full_tree(best_response_tree, parent, player=-1)
+        value_to_propagate = best_response_tree[best_sibling].value
+    best_response_tree[parent].value = value_to_propagate
+    propagate_rewards_recursive(best_response_tree, parent)
 
 
 def generate_full_tree_branching(tree, current_history):
