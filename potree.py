@@ -1,7 +1,3 @@
-import math
-
-
-# Partially observable UCT node as described by Silver and Veness 2010
 class PoNode:
 
     def __init__(self):

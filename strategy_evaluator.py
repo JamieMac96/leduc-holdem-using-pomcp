@@ -1,10 +1,8 @@
-import game
 import potree
 import util
 
 EPSILON = .99
 policy = {}
-environment = game.Game()
 full_tree = {"": potree.PoNode()}
 
 
@@ -15,6 +13,7 @@ def calculate_exploitability(tree):
     evaluate_terminals(best_response_tree)
     add_parents(best_response_tree)
     propagate_rewards(best_response_tree)
+    # util.print_tree(full_tree)
     # util.print_tree(best_response_tree)
     # util.manual_traverse_tree(best_response_tree)
     return best_response_tree[""].value
@@ -100,7 +99,7 @@ def propagate_rewards_recursive(best_response_tree, history):
 
 def generate_full_tree_branching(tree, current_history):
     cards = ["Qh", "Kh", "Ah", "Qs", "Ks", "As"]
-    player_one_card = util.get_player_one_card(current_history)
+    player_one_card = util.get_player_card(current_history, 1)
     cards_to_be_added = list(cards)
     cards_to_be_added.remove(player_one_card)
 
@@ -123,6 +122,6 @@ def generate_subtree(tree, history, full_tree_history, p2_card):
 
 
 def add_p2_card(history, p2_card):
-    player_one_card = util.get_player_one_card(history)
+    player_one_card = util.get_player_card(history)
     split_history = history.split(player_one_card)
     return split_history[0] + player_one_card + p2_card + split_history[1]

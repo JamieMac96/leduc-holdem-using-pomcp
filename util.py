@@ -1,57 +1,24 @@
-from card import Card
-import hand_evaluator
 from matplotlib import pyplot as plt
+
+CARDS = ["Qh", "Qs", "Kh", "Ks", "Ah", "As"]
 
 
 def information_function(history, player):
-    prefix = "-1" if history.startswith("-1") else "1"
+    prefix = str(get_prefix(history))
     history_no_prefix = history.replace(prefix, "", 1)
     if player == -1:
         return prefix + history_no_prefix[2:]
-    else:
+    elif player == 1:
         return prefix + history_no_prefix[:2] + history_no_prefix[4:]
+    else:
+        return history
 
 
 def is_terminal(history):
-    history_copy = history.replace("1", "")
-    if history_copy.endswith("f") or (history_copy.endswith("c") and history.count("c") > 1):
+    if history.endswith("f") or (history.endswith("c") and history.count("c") > 1):
         return True
     else:
         return False
-
-
-def calculate_reward_full_info(history):
-    if not is_terminal(history):
-        return 0
-    reward = 2
-    round = -1
-    bet_amount = 2
-
-    # In terms of reward, a raise==2 calls. This also simplifies the algorithm
-    modified_history = history.replace("r", "cc")
-
-    for char in modified_history:
-        if char in {"Q", "K", "A"}:
-            round += 1
-        if char in {"c", "b"}:
-            reward += bet_amount * round
-
-    if history.endswith("c"):
-        remove_items = ['1', '-', 'c', 'r', 'b', 'f']
-        cards = history.translate({ord(x): '' for x in remove_items})
-        pc_rank, pc_suit = cards[0], cards[1]
-        oc_rank, oc_suit = cards[2], cards[3]
-        pub_rank, pub_suit = cards[4], cards[5]
-
-        pc = Card(Card.STRING_TO_RANK[pc_rank], Card.STRING_TO_SUIT[pc_suit])
-        oc = Card(Card.STRING_TO_RANK[oc_rank], Card.STRING_TO_SUIT[oc_suit])
-        pub = Card(Card.STRING_TO_RANK[pub_rank], Card.STRING_TO_SUIT[pub_suit])
-
-        winner = get_showdown_winner(pc, oc, pub)
-    else:
-        winner = get_fold_winner(history)
-
-    return reward * winner
 
 
 def player(history):
@@ -66,42 +33,8 @@ def player(history):
         return -prefix
 
 
-def get_winner(history, environment):
-    if history.endswith("f"):
-        return get_fold_winner(history)
-    elif history.endswith("c"):
-        pc = environment.dealer.deal_private()[0]
-        oc = environment.dealer.deal_private()[1]
-        pub = environment.dealer.deal_public()
-        return get_showdown_winner(pc, oc, pub)
-
-
-def get_showdown_winner(pc, oc, pub):
-    hand_player = [pc, pub]
-    hand_opponent = [oc, pub]
-    player_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_player)
-    opp_val = hand_evaluator.HandEvaluator.Two.evaluate_percentile(hand_opponent)
-
-    if player_val >= opp_val:
-        return 1
-    else:
-        return -1
-
-
-def get_fold_winner(history):
-    prefix = get_prefix(history)
-    last_actions = get_last_history_actions(history)
-    index = last_actions.index("f")
-    if index % 2 == 0:
-        winner = -prefix
-    else:
-        winner = prefix
-    return winner
-
-
 def get_last_history_actions(history):
-    cards = ["Qh", "Kh", "Ah", "Qs", "Ks", "As"]
-    split_history = split(history, cards)
+    split_history = split(history, CARDS)
     return split_history[len(split_history) - 1]
 
 
@@ -114,9 +47,12 @@ def split(txt, seps):
     return [i.strip() for i in txt.split(default_sep)]
 
 
-def get_player_one_card(history):
+def get_player_card(history, player):
     prefix = get_prefix(history)
-    return history[1:3] if prefix == 1 else history[2:4]
+    if player == 1:
+        return history[1:3] if prefix == 1 else history[2:4]
+    else:
+        return history[3:5] if prefix == 1 else history[4:6]
 
 
 def get_best_child(tree, history, player=1):
@@ -161,19 +97,24 @@ def get_average_child_value(tree, history):
 
 
 def get_prefix(history):
-    return -1 if history.startswith("-1") else 1
+    if history.startswith("-1"):
+        return -1
+    elif history.startswith("1"):
+        return 1
+    else:
+        return ""
 
 
 def get_information_equivalent_nodes(tree, history, player):
-    cards = ["Ah", "As", "Kh", "Ks", "Qh", "Qs"]
+    cards_copy = list(CARDS)
     prefix = get_prefix(history)
     player_history = information_function(history, player)
     history_copy = player_history.replace(str(prefix), "")
     player_card = history_copy[0:2]
-    cards.remove(player_card)
+    cards_copy.remove(player_card)
 
     information_equivalent_histories = list()
-    for card in cards:
+    for card in cards_copy:
         if player == 1:
             eq_history = str(prefix) + history_copy[0:2] + card + history_copy[2:]
         else:
@@ -192,22 +133,35 @@ def get_available_actions(history):
     elif history.endswith("h") or history.endswith("s"):
         return ["b", "f"]
     elif history.endswith("c") and not is_terminal(history):
-        cards = ["Ah", "As", "Kh", "Ks", "Qh", "Qs"]
-        for item in cards:
-            if item in history:
-                cards.remove(item)
-        return cards
+        return get_available_cards(history)
+    elif history == "":
+        return get_initial_chance_actions()
     else:
         return []
 
 
-def average_reward(histories):
-    reward_sum = float()
+def get_available_cards(history):
+    cards_copy = list(CARDS)
+    index = 0
+    while index < len(cards_copy):
+        if cards_copy[index] in history:
+            cards_copy.remove(cards_copy[index])
+            index -= 1
+        index += 1
+    return cards_copy
 
-    for history in histories:
-        reward_sum += calculate_reward_full_info(history)
 
-    return reward_sum / len(histories)
+# TODO: Change to literal for performance benefit.
+def get_initial_chance_actions():
+    prefixes = [-1, 1]
+    initial_hands = list()
+    for prefix in prefixes:
+        for p1_card in CARDS:
+            for p2_card in CARDS:
+                if p1_card != p2_card:
+                    initial_hands.append(str(prefix) + p1_card + p2_card)
+
+    return initial_hands
 
 
 def manual_traverse_tree(tree):
@@ -239,8 +193,5 @@ def print_tree(tree):
     print("value of ace: " + str(ace_total_value))
 
 
-def show_graph(x_items, y_items, x_label, y_label):
-    plt.plot(x_items, y_items)
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    plt.show()
+if __name__ == "__main__":
+    pass
