@@ -1,4 +1,3 @@
-import strategy_evaluator
 import mcts
 import metrics
 import util
@@ -12,6 +11,7 @@ class Invoker:
         self.repetitions = repetitions
         self.time_limit = time_limit
         self.m_metrics = metrics.Metrics()
+        self.mcts_instance = mcts.Mcts()
 
     def invoke(self):
         for i in range(self.repetitions):
@@ -20,15 +20,16 @@ class Invoker:
             self.m_metrics.repeated_rewards.append(self.m_metrics.rewards)
 
         util.print_tree(mcts.player_one_tree)
+        self.m_metrics.show_cumulative_reward()
 
     def search(self, history, time_limit=None, iterations=None):
         if self.time_limit is not None:
             self.time_limit = time.time() + time_limit / 1000
             while time.time() < time_limit:
-                mcts.simulate(history)
+                self.mcts_instance.simulate(history)
         elif iterations is not None:
             for i in range(iterations):
-                mcts.simulate(history)
+                self.mcts_instance.simulate(history)
                 self.m_metrics.handle_exploitability(i, mcts.player_one_tree)
         else:
             raise ValueError("You must specify a time or iterations limit")

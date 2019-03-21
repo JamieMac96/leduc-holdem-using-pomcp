@@ -7,16 +7,17 @@ full_tree = {"": potree.PoNode()}
 
 
 def calculate_exploitability(tree):
+    return get_best_response_tree(tree)[""].value
+
+
+def get_best_response_tree(tree):
     full_tree = generate_full_game_tree(tree, "")
     best_response_tree = {}
     best_response_tree = apply_mcts_strategy(tree, full_tree, best_response_tree, "")
     evaluate_terminals(best_response_tree)
     add_parents(best_response_tree)
     propagate_rewards(best_response_tree)
-    # util.print_tree(full_tree)
-    # util.print_tree(best_response_tree)
-    # util.manual_traverse_tree(best_response_tree)
-    return best_response_tree[""].value
+    return best_response_tree
 
 
 def generate_full_game_tree(tree, current_history):

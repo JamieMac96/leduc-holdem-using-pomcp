@@ -51,7 +51,7 @@ class Metrics:
 
 def show_graph(x_label, y_label, y_items, x_items=None):
     if x_items is None:
-        x_items = zip(range(len(y_items)))
+        x_items = list(zip(range(len(y_items))))
     plt.plot(x_items, y_items)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
