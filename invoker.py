@@ -24,9 +24,10 @@ class Invoker:
         self.m_metrics.show_cumulative_reward()
         self.m_metrics.show_cumulative_reward_slope()
         self.m_metrics.show_exploitability()
-        util.manual_traverse_tree(mcts.player_one_tree)
+        # util.manual_traverse_tree(mcts.player_one_tree)
 
-        persistance.save_deterministic_strategy(mcts.player_one_tree, "Deterministic_200000_random.json")
+        # persistance.save_deterministic_strategy(mcts.player_one_tree, "Deterministic_200000_self_play.json")
+        persistance.save_stochastic_strategy(mcts.player_one_tree, "Stochastic_200000_random.json")
 
     def search(self, history, time_limit=None, iterations=None):
         if self.time_limit is not None:
@@ -41,5 +42,5 @@ class Invoker:
             raise ValueError("You must specify a time or iterations limit")
 
 if __name__ == "__main__":
-    invoker = Invoker(200000, 10)
+    invoker = Invoker(200000, 1)
     invoker.invoke()
