@@ -17,8 +17,11 @@ class Invoker:
     def invoke(self):
         for i in range(self.repetitions):
             self.m_metrics.reset()
+            mcts.player_one_tree = {}
+            mcts.player_two_tree = {}
             self.search("", iterations=self.iterations)
             self.m_metrics.repeated_rewards.append(self.m_metrics.rewards)
+            self.m_metrics.repeated_exploitability_values.append(self.m_metrics.exploitability_values)
 
         util.print_tree(mcts.player_one_tree)
         self.m_metrics.show_cumulative_reward()
@@ -26,7 +29,7 @@ class Invoker:
         self.m_metrics.show_exploitability()
         # util.manual_traverse_tree(mcts.player_one_tree)
 
-        # persistance.save_deterministic_strategy(mcts.player_one_tree, "Deterministic_200000_self_play.json")
+        persistance.save_deterministic_strategy(mcts.player_one_tree, "Deterministic_200000_self_play.json")
         persistance.save_stochastic_strategy(mcts.player_one_tree, "Stochastic_200000_random.json")
 
     def search(self, history, time_limit=None, iterations=None):
@@ -42,5 +45,5 @@ class Invoker:
             raise ValueError("You must specify a time or iterations limit")
 
 if __name__ == "__main__":
-    invoker = Invoker(200000, 1)
+    invoker = Invoker(100000, 10)
     invoker.invoke()

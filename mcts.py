@@ -27,6 +27,7 @@ class Mcts:
             return self.rollout(history)
 
         player_history = util.information_function(history, player)
+        # TODO: fix: Some nodes do not have children (expanding both player's trees)
         if player_history in player_tree and player_tree[player_history].children:
             action = self.get_best_action_ucb(history)
         else:
@@ -94,10 +95,6 @@ class Mcts:
 
 
 def rollout_policy(actions):
-    try:
-        actions.remove("f")
-    except ValueError:
-        pass
     return random.choice(actions)
 
 
