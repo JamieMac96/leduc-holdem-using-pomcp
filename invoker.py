@@ -1,6 +1,7 @@
 import mcts
 import metrics
 import util
+import persistance
 
 import time
 
@@ -11,7 +12,7 @@ class Invoker:
         self.repetitions = repetitions
         self.time_limit = time_limit
         self.m_metrics = metrics.Metrics()
-        self.mcts_instance = mcts.Mcts()
+        self.mcts_instance = mcts.Mcts(self.m_metrics)
 
     def invoke(self):
         for i in range(self.repetitions):
@@ -21,6 +22,11 @@ class Invoker:
 
         util.print_tree(mcts.player_one_tree)
         self.m_metrics.show_cumulative_reward()
+        self.m_metrics.show_cumulative_reward_slope()
+        self.m_metrics.show_exploitability()
+        util.manual_traverse_tree(mcts.player_one_tree)
+
+        persistance.save_deterministic_strategy(mcts.player_one_tree, "Deterministic_200000_random.json")
 
     def search(self, history, time_limit=None, iterations=None):
         if self.time_limit is not None:
@@ -35,5 +41,5 @@ class Invoker:
             raise ValueError("You must specify a time or iterations limit")
 
 if __name__ == "__main__":
-    invoker = Invoker(10000, 1)
+    invoker = Invoker(200000, 10)
     invoker.invoke()

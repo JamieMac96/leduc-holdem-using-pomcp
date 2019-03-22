@@ -1,5 +1,6 @@
 import potree
 import util
+import evaluator
 
 EPSILON = .99
 policy = {}
@@ -56,7 +57,7 @@ def apply_mcts_strategy(tree, full_tree, best_response_tree, current_history):
 def evaluate_terminals(best_response_tree):
     for history, node in best_response_tree.items():
         if util.is_terminal(history):
-            best_response_tree[history].value = util.calculate_reward_full_info(history)
+            best_response_tree[history].value = evaluator.calculate_reward_full_info(history)
 
 
 def add_parents(best_response_tree):
@@ -76,7 +77,7 @@ def propagate_rewards(best_response_tree):
             leaf_parents.append(parent)
             if util.player(history) == 1:
                 eq_nodes = util.get_information_equivalent_nodes(best_response_tree, history, -1)
-                average_reward = util.average_reward(eq_nodes)
+                average_reward = evaluator.average_reward(eq_nodes)
                 best_response_tree[parent].value = average_reward
             else:
                 best_response_tree[parent].value = best_response_tree[history].value
@@ -123,6 +124,6 @@ def generate_subtree(tree, history, full_tree_history, p2_card):
 
 
 def add_p2_card(history, p2_card):
-    player_one_card = util.get_player_card(history)
+    player_one_card = util.get_player_card(history, 1)
     split_history = history.split(player_one_card)
     return split_history[0] + player_one_card + p2_card + split_history[1]

@@ -10,7 +10,6 @@ class Metrics:
         self.cumulative_reward = 0.0
         self.repeated_rewards = [[]]
         self.rewards = []
-        self.rewards_list_averaged = []
         self.avg_winnings = []
         self.exploitability_values = []
         sbn.set_style("darkgrid")
@@ -26,14 +25,6 @@ class Metrics:
                 slope = (self.rewards[i] - self.rewards[i - interval]) / interval
                 self.avg_winnings.append(slope)
 
-    def calculate_average_rewards_across_repetitions(self):
-        reward_sum = 0
-        for i in range(len(self.rewards)):
-            for reward_list in self.repeated_rewards:
-                reward_sum += reward_list[i]
-            self.rewards_list_averaged.append(reward_sum / len(self.repeated_rewards))
-            reward_sum = 0
-
     def show_exploitability(self):
         show_graph("Iterations", "Exploitability", self.exploitability_values)
 
@@ -41,7 +32,8 @@ class Metrics:
         show_graph("Iterations", "Cumulative Reward", self.rewards)
 
     def show_cumulative_reward_slope(self):
-        show_graph("Iterations", "Avg. Winnings", self.exploitability_values)
+        self.calculate_avg_winnings_over_time(1000)
+        show_graph("Iterations", "Avg. Winnings", self.avg_winnings)
 
     def reset(self):
         self.cumulative_reward = 0.0

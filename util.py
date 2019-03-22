@@ -125,7 +125,7 @@ def get_information_equivalent_nodes(tree, history, player):
     return information_equivalent_histories
 
 
-def get_available_actions(history):
+def get_available_actions(history, player=None):
     if history.endswith("b"):
         return ["c", "r", "f"]
     elif history.endswith("r"):
@@ -135,7 +135,10 @@ def get_available_actions(history):
     elif history.endswith("c") and not is_terminal(history):
         return get_available_cards(history)
     elif history == "":
-        return get_initial_chance_actions()
+        if player is None:
+            return get_all_initial_chance_actions()
+        else:
+            return get_initial_chance_actions()
     else:
         return []
 
@@ -151,17 +154,22 @@ def get_available_cards(history):
     return cards_copy
 
 
-# TODO: Change to literal for performance benefit.
-def get_initial_chance_actions():
-    prefixes = [-1, 1]
-    initial_hands = list()
-    for prefix in prefixes:
-        for p1_card in CARDS:
-            for p2_card in CARDS:
-                if p1_card != p2_card:
-                    initial_hands.append(str(prefix) + p1_card + p2_card)
+def get_all_initial_chance_actions():
+    return ['-1QhQs', '-1QhKh', '-1QhKs', '-1QhAh', '-1QhAs', '-1QsQh',
+            '-1QsKh', '-1QsKs', '-1QsAh', '-1QsAs', '-1KhQh', '-1KhQs',
+            '-1KhKs', '-1KhAh', '-1KhAs', '-1KsQh', '-1KsQs', '-1KsKh',
+            '-1KsAh', '-1KsAs', '-1AhQh', '-1AhQs', '-1AhKh', '-1AhKs',
+            '-1AhAs', '-1AsQh', '-1AsQs', '-1AsKh', '-1AsKs', '-1AsAh',
+            '1QhQs', '1QhKh', '1QhKs', '1QhAh', '1QhAs', '1QsQh',
+            '1QsKh', '1QsKs', '1QsAh', '1QsAs', '1KhQh', '1KhQs',
+            '1KhKs', '1KhAh', '1KhAs', '1KsQh', '1KsQs', '1KsKh',
+            '1KsAh', '1KsAs', '1AhQh', '1AhQs', '1AhKh', '1AhKs',
+            '1AhAs', '1AsQh', '1AsQs', '1AsKh','1AsKs', '1AsAh']
 
-    return initial_hands
+
+def get_initial_chance_actions():
+    return ['-1Qs', '-1Qh', '-1Ks', '-1Kh', '-1As', '-1Ah',
+            '1Qs', '1Qh', '1Ks', '1Kh', '1As', '1Ah']
 
 
 def manual_traverse_tree(tree):

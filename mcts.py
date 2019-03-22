@@ -6,15 +6,15 @@ import evaluator
 import math
 import random
 
-m_metrics = metrics.Metrics()
 player_one_tree = {}  # Root node of tree
 player_two_tree = {}  # Player 2 aka player -1
 
 
 class Mcts:
-    def __init__(self, discount_factor=.95, exploration_constant=50):
+    def __init__(self, m_metrics, discount_factor=.95, exploration_constant=50):
         self.discount_factor = discount_factor
         self.exploration_constant = exploration_constant
+        self.m_metrics = m_metrics
         self.out_of_tree = {1: False, -1: False, 0: False}
 
     def simulate(self, history):
@@ -27,7 +27,7 @@ class Mcts:
             return self.rollout(history)
 
         player_history = util.information_function(history, player)
-        if player_history in player_tree:
+        if player_history in player_tree and player_tree[player_history].children:
             action = self.get_best_action_ucb(history)
         else:
             expand(player_one_tree, history, 1)
@@ -56,14 +56,13 @@ class Mcts:
 
     def handle_terminal_state(self, history):
         reward = evaluator.calculate_reward_full_info(history)
-        m_metrics.cumulative_reward += reward
-        m_metrics.rewards.append(m_metrics.cumulative_reward)
+        self.m_metrics.cumulative_reward += reward
+        self.m_metrics.rewards.append(self.m_metrics.cumulative_reward)
         self.reset_out_of_tree()
         return reward
 
     def get_best_action_ucb(self, history):
         player = util.player(history)
-        player_history = util.information_function(history, player)
         if player == -1:
             return random.choice(util.get_available_actions(history))
 
@@ -71,24 +70,27 @@ class Mcts:
             tree = get_tree(player)
             best_value = float('-inf')
             best_action = None
+            player_history = util.information_function(history, player)
             for action in util.get_available_actions(history):
-                next_history = history + action
-                if next_history not in tree:
-                    new_visitation_count = 1
-                    new_value = 0
-                else:
-                    new_visitation_count = tree[next_history].visitation_count
-                    new_value = tree[next_history].value * player
-                exploration_bonus = self.exploration_constant * \
-                                math.sqrt(math.log(tree[player_history].visitation_count + 1) /
-                                          new_visitation_count)
-                node_val = new_value + exploration_bonus
+                node_val = self.calculate_next_node_value(tree, player_history, action, player)
                 if node_val > best_value:
                     best_action = action
                     best_value = node_val
             return best_action
         else:
             return random.choice(util.get_available_actions(history))
+
+    def calculate_next_node_value(self, tree, player_history, action, player):
+        next_history = player_history + action
+        new_visitation_count = 1
+        new_value = 0
+        if next_history in tree:
+            new_visitation_count = tree[next_history].visitation_count
+            new_value = tree[next_history].value * player
+        exploration_bonus = self.exploration_constant * \
+                            math.sqrt(math.log(tree[player_history].visitation_count + 1) /
+                                      new_visitation_count)
+        return new_value + exploration_bonus
 
 
 def rollout_policy(actions):
@@ -127,9 +129,8 @@ def expand(tree, history, player):
     if player_history not in tree:
         tree[player_history] = potree.PoNode()
 
-    for action in util.get_available_actions(history):
-        new_history = util.information_function(history + action, player)
+    for action in util.get_available_actions(player_history, player=player):
+        new_history = player_history + action
         if new_history not in tree:
             tree[new_history] = potree.PoNode()
         tree[player_history].children.add(new_history)
-
