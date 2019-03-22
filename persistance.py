@@ -13,7 +13,7 @@ def save_stochastic_strategy(tree, filename):
 
 
 def save_to_file(strategy, filename):
-    file = open(filename, "w+")
+    file = open("./strategies/" + filename, "w+")
     file.write(json.dumps(strategy, indent=4, sort_keys=True))
 
 

@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="my_cards">
+    <file>back.png</file>
+    <file>Ah.svg</file>
+    <file>As.svg</file>
+    <file>Kh.svg</file>
+    <file>Ks.svg</file>
+    <file>Qh.svg</file>
+    <file>Qs.svg</file>
+  </qresource>
+</RCC>
