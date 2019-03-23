@@ -1,6 +1,7 @@
 from numpy.random import choice
 import json
-from pprint import pprint
+
+import util
 
 
 class Agent:
@@ -14,15 +15,16 @@ class Agent:
         return strategy
 
     def get_action(self, history):
-        if isinstance(self.strategy[history], dict):
+        player_history = util.information_function(history, 1)
+        if isinstance(self.strategy[player_history], dict):
             candidates = []
             probabilities = []
 
-            for key, value in self.strategy[history].items():
+            for key, value in self.strategy[player_history].items():
                 candidates.append(key)
                 probabilities.append(value)
 
             draw = choice(candidates, p=probabilities)
             return draw
         else:
-            return self.strategy[history]
+            return self.strategy[player_history]

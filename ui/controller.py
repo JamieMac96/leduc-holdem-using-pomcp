@@ -1,7 +1,6 @@
 from ui import screen
 from PyQt5.QtWidgets import (QWidget, QPushButton, QMainWindow, QApplication)
 import sys
-import re
 
 from ui.driver import Driver
 
@@ -11,6 +10,7 @@ BUTTON_ACTIONS_BY_INDEX = {
     2: "b",
     3: "r"
 }
+
 
 class Controller(QWidget):
     def __init__(self, application):
@@ -26,6 +26,7 @@ class Controller(QWidget):
             "p1_card": self.update_player_one_card,
             "p2_card": self.update_player_two_card,
             "textbox": self.update_textbox,
+            "public": self.show_public_card,
             "pot": self.update_pot,
             "actions": self.update_actions
         }
@@ -58,20 +59,26 @@ class Controller(QWidget):
     def update_player_two_card(self, value):
         update_card(self.ui_screen.opponent_card, value)
 
+    def show_public_card(self, value):
+        update_card(self.ui_screen.public_card, value)
+
     def update_textbox(self, value):
-        pass
+        self.ui_screen.textbox.setText(value)
 
     def update_pot(self, value):
-        pass
+        self.ui_screen.pot.setText(str(value))
 
     def update_actions(self, actions):
-        pass
+        for i in range(len(self.radio_buttons)):
+            if BUTTON_ACTIONS_BY_INDEX[i] in actions:
+                self.radio_buttons[i].show()
+            else:
+                self.radio_buttons[i].hide()
 
     def take_action(self):
         for i in range(len(self.radio_buttons)):
-            if self.radio_buttons[i].ischecked():
+            if self.radio_buttons[i].isChecked():
                 self.driver.update_game_state(BUTTON_ACTIONS_BY_INDEX[i])
-                return
 
         self.update_ui()
 

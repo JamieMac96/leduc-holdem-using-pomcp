@@ -45,6 +45,9 @@ class Ui_MainWindow(object):
         self.opponent_card = QtWidgets.QLabel(self.centralwidget)
         self.opponent_card.setGeometry(QtCore.QRect(410, 50, 66, 81))
         self.opponent_card.setObjectName("opponent_card")
+        self.public_card = QtWidgets.QLabel(self.centralwidget)
+        self.public_card.setGeometry(QtCore.QRect(410, 150, 66, 81))
+        self.public_card.setObjectName("opponent_card")
         self.pot = QtWidgets.QTextBrowser(self.centralwidget)
         self.pot.setGeometry(QtCore.QRect(530, 190, 201, 51))
         self.pot.setStyleSheet("background-color: rgb(0,153,0);\n"
@@ -112,6 +115,7 @@ class Ui_MainWindow(object):
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"></p></body></html>"))
         self.player_card.setText(_translate("MainWindow", "<html><head/><body><p><img src=\":/my_cards/Ah.svg\"/></p></body></html>"))
         self.opponent_card.setText(_translate("MainWindow", "<html><head/><body><p><img src=\":/my_cards/back.png\"/></p></body></html>"))
+        self.public_card.setText(_translate("MainWindow", "<html><head/><body><p><img src=\":/my_cards/back.png\"/></p></body></html>"))
         self.menuFIle.setTitle(_translate("MainWindow", "Game"))
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar"))
         self.toolBar_2.setWindowTitle(_translate("MainWindow", "toolBar_2"))
@@ -123,6 +127,7 @@ class Ui_MainWindow(object):
         self.toolBar_8.setWindowTitle(_translate("MainWindow", "toolBar_8"))
         self.actionNew_Game.setText(_translate("MainWindow", "New Game"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
+        self.pot.setFontPointSize(14)
 
 import cards_resource
 import sys
