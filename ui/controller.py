@@ -60,7 +60,8 @@ class Controller(QWidget):
         update_card(self.ui_screen.opponent_card, value)
 
     def show_public_card(self, value):
-        update_card(self.ui_screen.public_card, value)
+        if value != "":
+            update_card(self.ui_screen.public_card, value)
 
     def update_textbox(self, value):
         self.ui_screen.textbox.setText(value)
