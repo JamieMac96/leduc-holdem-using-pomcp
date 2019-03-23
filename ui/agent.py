@@ -1,5 +1,6 @@
-import random
+from numpy.random import choice
 import json
+from pprint import pprint
 
 
 class Agent:
@@ -16,14 +17,12 @@ class Agent:
         if isinstance(self.strategy[history], dict):
             candidates = []
             probabilities = []
-            num_choices = 0
 
             for key, value in self.strategy[history].items():
                 candidates.append(key)
                 probabilities.append(value)
-                num_choices += 1
 
-            draw = random.choice(candidates, num_choices, p=probabilities)
+            draw = choice(candidates, p=probabilities)
             return draw
         else:
             return self.strategy[history]
