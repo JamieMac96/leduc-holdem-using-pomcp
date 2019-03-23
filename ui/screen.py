@@ -36,20 +36,21 @@ class Ui_MainWindow(object):
         self.graphicsView.setGeometry(QtCore.QRect(-10, 10, 901, 391))
         self.graphicsView.setStyleSheet("background: url(/home/jamie/Desktop/Y4S2/product_FYP/leduc-holdem-using-pomcp/ui/game_table.png)")
         self.graphicsView.setObjectName("graphicsView")
-        self.textBrowser = QtWidgets.QTextBrowser(self.centralwidget)
-        self.textBrowser.setGeometry(QtCore.QRect(890, 10, 161, 391))
-        self.textBrowser.setObjectName("textBrowser")
+        self.textbox = QtWidgets.QTextBrowser(self.centralwidget)
+        self.textbox.setGeometry(QtCore.QRect(890, 10, 161, 391))
+        self.textbox.setObjectName("textbox")
         self.player_card = QtWidgets.QLabel(self.centralwidget)
         self.player_card.setGeometry(QtCore.QRect(410, 280, 71, 91))
         self.player_card.setObjectName("player_card")
         self.opponent_card = QtWidgets.QLabel(self.centralwidget)
         self.opponent_card.setGeometry(QtCore.QRect(410, 50, 66, 81))
         self.opponent_card.setObjectName("opponent_card")
-        self.textBrowser_2 = QtWidgets.QTextBrowser(self.centralwidget)
-        self.textBrowser_2.setGeometry(QtCore.QRect(530, 190, 201, 51))
-        self.textBrowser_2.setStyleSheet("background-color: rgb(0,153,0);\n"
+        self.pot = QtWidgets.QTextBrowser(self.centralwidget)
+        self.pot.setGeometry(QtCore.QRect(530, 190, 201, 51))
+        self.pot.setStyleSheet("background-color: rgb(0,153,0);\n"
 "border:none;")
-        self.textBrowser_2.setObjectName("textBrowser_2")
+        self.pot.setObjectName("pot")
+        self.pot.setText("0")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1050, 25))
@@ -104,11 +105,11 @@ class Ui_MainWindow(object):
         self.raise_radio.setText(_translate("MainWindow", "raise"))
         self.take_action_button.setText(_translate("MainWindow", "Take Action"))
         self.new_game_button.setText(_translate("MainWindow", "New Round"))
-        self.textBrowser.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+        self.textbox.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">This is some text</p></body></html>"))
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"></p></body></html>"))
         self.player_card.setText(_translate("MainWindow", "<html><head/><body><p><img src=\":/my_cards/Ah.svg\"/></p></body></html>"))
         self.opponent_card.setText(_translate("MainWindow", "<html><head/><body><p><img src=\":/my_cards/back.png\"/></p></body></html>"))
         self.menuFIle.setTitle(_translate("MainWindow", "Game"))

@@ -9,6 +9,11 @@ from card import Card
 def calculate_reward_full_info(history):
     if not util.is_terminal(history):
         return 0
+
+    return get_pot(history) * get_winner(history)
+
+
+def get_pot(history):
     reward = 2
     round = -1
     bet_amount = 2
@@ -20,8 +25,7 @@ def calculate_reward_full_info(history):
             round += 1
         if char in {"c", "b"}:
             reward += bet_amount * round
-
-    return reward * get_winner(history)
+    return reward
 
 
 def average_reward(histories):
