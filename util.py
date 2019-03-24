@@ -105,13 +105,25 @@ def get_prefix(history):
         return ""
 
 
-def get_information_equivalent_nodes(tree, history, player):
-    cards_copy = list(CARDS)
+def get_all_full_histories_from_player_history(history, player):
+    prefix = get_prefix(history)
+    history_no_prefix = history.replace(str(prefix), "")
+    full_histories = []
+
+    for card in get_available_cards(history):
+        if player == -1:
+            full_histories.append(str(prefix) + card + history_no_prefix)
+        elif player == 1:
+            full_histories.append(str(prefix) + history_no_prefix[:2] + card + history_no_prefix[2:])
+
+    return full_histories
+
+
+def get_information_equivalent_nodes(history, player):
     prefix = get_prefix(history)
     player_history = information_function(history, player)
+    cards_copy = get_available_cards(player_history)
     history_copy = player_history.replace(str(prefix), "")
-    player_card = history_copy[0:2]
-    cards_copy.remove(player_card)
 
     information_equivalent_histories = list()
     for card in cards_copy:
@@ -119,8 +131,7 @@ def get_information_equivalent_nodes(tree, history, player):
             eq_history = str(prefix) + history_copy[0:2] + card + history_copy[2:]
         else:
             eq_history = str(prefix) + card + history_copy
-        if eq_history in tree:
-            information_equivalent_histories.append(eq_history)
+        information_equivalent_histories.append(eq_history)
 
     return information_equivalent_histories
 

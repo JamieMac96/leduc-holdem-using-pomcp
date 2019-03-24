@@ -45,5 +45,5 @@ class Invoker:
             raise ValueError("You must specify a time or iterations limit")
 
 if __name__ == "__main__":
-    invoker = Invoker(100000, 1)
+    invoker = Invoker(100000, 10)
     invoker.invoke()

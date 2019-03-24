@@ -1,10 +1,11 @@
+import time
+
 import potree
 import util
 import evaluator
 
 EPSILON = .99
 policy = {}
-full_tree = {"": potree.PoNode()}
 
 
 def calculate_exploitability(tree):
@@ -12,52 +13,69 @@ def calculate_exploitability(tree):
 
 
 def get_best_response_tree(tree):
-    full_tree = generate_full_game_tree(tree, "")
+    full_tree = build_tree("", {})
+    terminals = []
     best_response_tree = {}
-    best_response_tree = apply_mcts_strategy(tree, full_tree, best_response_tree, "")
-    evaluate_terminals(best_response_tree)
+    best_response_tree = apply_mcts_strategy(tree, full_tree, best_response_tree, "", terminals)
+    evaluate_terminals(best_response_tree, terminals)
     add_parents(best_response_tree)
-    propagate_rewards(best_response_tree)
+    propagate_rewards(best_response_tree, terminals)
+    # util.print_tree(best_response_tree)
+    # util.manual_traverse_tree(best_response_tree)
     return best_response_tree
 
 
-def generate_full_game_tree(tree, current_history):
-    if not current_history:
-        for child in tree[current_history].children:
-            generate_full_tree_branching(tree, child)
+def build_tree(history, tree):
+    if history not in tree:
+        tree[history] = potree.PoNode()
 
-    return full_tree
+    if not util.is_terminal(history):
+        actions = util.get_available_actions(history)
+        for action in actions:
+            child = history + action
+            tree[child] = potree.PoNode()
+            tree[child].parent = history
+            tree[history].children.add(child)
+            build_tree(child, tree)
+
+    return tree
 
 
-def apply_mcts_strategy(tree, full_tree, best_response_tree, current_history):
+def apply_mcts_strategy(tree, full_tree, best_response_tree, current_history, terminals):
     if current_history not in full_tree:
         return best_response_tree
 
     best_response_tree[current_history] = potree.PoNode()
-    histories = full_tree[current_history].children
+    children = full_tree[current_history].children
+    if util.is_terminal(current_history):
+        terminals.append(current_history)
 
     if util.player(current_history) == 1:
         player_history = util.information_function(current_history, 1)
-        best_child = util.get_best_child(tree, player_history)  # TODO: have chance as separate player/independent nodes
+        best_child = util.get_best_child(tree, player_history)
         if best_child is not None:
             action = best_child.replace(player_history, "")
-            histories = [current_history + action]
+            children = [current_history + action]
             best_response_tree[current_history].children = {current_history + action}
         else:
-            histories = []
+            children = []
     else:
-        best_response_tree[current_history].children = set(histories)
+        best_response_tree[current_history].children = set(children)
 
-    for history in histories:
-        apply_mcts_strategy(tree, full_tree, best_response_tree, history)
+    for history in children:
+        apply_mcts_strategy(tree, full_tree, best_response_tree, history, terminals)
 
     return best_response_tree
 
 
-def evaluate_terminals(best_response_tree):
-    for history, node in best_response_tree.items():
-        if util.is_terminal(history):
+def evaluate_terminals(best_response_tree, terminals):
+    for history in terminals:
+        if history.endswith("f"):
             best_response_tree[history].value = evaluator.calculate_reward_full_info(history)
+        else:
+            eq_nodes = util.get_information_equivalent_nodes(history, -1)
+            avg = evaluator.average_reward(eq_nodes)
+            best_response_tree[history].value = avg
 
 
 def add_parents(best_response_tree):
@@ -68,21 +86,8 @@ def add_parents(best_response_tree):
                 best_response_tree[child].parent = history
 
 
-def propagate_rewards(best_response_tree):
-    leaf_parents = list()
-
-    for history, node in best_response_tree.items():
-        if util.is_terminal(history):
-            parent = node.parent
-            leaf_parents.append(parent)
-            if util.player(history) == 1:
-                eq_nodes = util.get_information_equivalent_nodes(best_response_tree, history, -1)
-                average_reward = evaluator.average_reward(eq_nodes)
-                best_response_tree[parent].value = average_reward
-            else:
-                best_response_tree[parent].value = best_response_tree[history].value
-
-    for history in leaf_parents:
+def propagate_rewards(best_response_tree, terminals):
+    for history in terminals:
         propagate_rewards_recursive(best_response_tree, history)
 
 
@@ -90,37 +95,16 @@ def propagate_rewards_recursive(best_response_tree, history):
     if history == "":
         return
     parent = best_response_tree[history].parent
-    if util.player(parent) == 0:
+    player = util.player(parent)
+    if player == 0:
         value_to_propagate = util.get_average_child_value(best_response_tree, parent)
+    elif player == 1:
+        value_to_propagate = best_response_tree[next(iter(best_response_tree[parent].children))].value
     else:
-        best_sibling = util.get_best_child_full_tree(best_response_tree, parent, player=-1)
+        best_sibling = util.get_best_child(best_response_tree, parent, -1)
         value_to_propagate = best_response_tree[best_sibling].value
     best_response_tree[parent].value = value_to_propagate
     propagate_rewards_recursive(best_response_tree, parent)
-
-
-def generate_full_tree_branching(tree, current_history):
-    cards = ["Qh", "Kh", "Ah", "Qs", "Ks", "As"]
-    player_one_card = util.get_player_card(current_history, 1)
-    cards_to_be_added = list(cards)
-    cards_to_be_added.remove(player_one_card)
-
-    split_history = current_history.split(player_one_card)
-
-    for card in cards_to_be_added:
-        public_history = split_history[0] + player_one_card + card + split_history[1]
-        full_tree[""].children.add(public_history)
-        generate_subtree(tree, current_history, public_history, card)
-
-
-def generate_subtree(tree, history, full_tree_history, p2_card):
-    full_tree[full_tree_history] = potree.PoNode()
-
-    for child in tree[history].children:
-        if p2_card not in child:
-            full_tree_child = add_p2_card(child, p2_card)
-            full_tree[full_tree_history].children.add(full_tree_child)
-            generate_subtree(tree, child, full_tree_child, p2_card)
 
 
 def add_p2_card(history, p2_card):

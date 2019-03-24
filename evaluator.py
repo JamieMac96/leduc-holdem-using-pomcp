@@ -29,6 +29,8 @@ def get_pot(history):
 
 
 def average_reward(histories):
+    if not histories:
+        return 0
     reward_sum = float()
 
     for history in histories:
