@@ -39,6 +39,9 @@ class Ui_MainWindow(object):
         self.textbox = QtWidgets.QTextBrowser(self.centralwidget)
         self.textbox.setGeometry(QtCore.QRect(890, 10, 161, 391))
         self.textbox.setObjectName("textbox")
+        self.total_winnings = QtWidgets.QTextBrowser(self.centralwidget)
+        self.total_winnings.setGeometry(QtCore.QRect(720, 590, 170, 27))
+        self.total_winnings.setObjectName("total_winnings")
         self.player_card = QtWidgets.QLabel(self.centralwidget)
         self.player_card.setGeometry(QtCore.QRect(410, 280, 71, 91))
         self.player_card.setObjectName("player_card")
@@ -46,7 +49,7 @@ class Ui_MainWindow(object):
         self.opponent_card.setGeometry(QtCore.QRect(410, 50, 66, 81))
         self.opponent_card.setObjectName("opponent_card")
         self.public_card = QtWidgets.QLabel(self.centralwidget)
-        self.public_card.setGeometry(QtCore.QRect(410, 150, 66, 81))
+        self.public_card.setGeometry(QtCore.QRect(410, 165, 66, 81))
         self.public_card.setObjectName("public_card")
         self.pot = QtWidgets.QTextBrowser(self.centralwidget)
         self.pot.setGeometry(QtCore.QRect(530, 190, 201, 51))
@@ -108,6 +111,7 @@ class Ui_MainWindow(object):
         self.raise_radio.setText(_translate("MainWindow", "raise"))
         self.take_action_button.setText(_translate("MainWindow", "Take Action"))
         self.new_game_button.setText(_translate("MainWindow", "New Round"))
+        self.total_winnings.setText("Total Winnings: 0")
         self.textbox.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"

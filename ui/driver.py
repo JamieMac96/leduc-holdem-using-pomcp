@@ -19,7 +19,8 @@ ACTION_MESSAGES = {
 
 PLAYER_NAMES = {
     1: "Bot ",
-    -1: "You "
+    -1: "You ",
+    0: ""
 }
 
 
@@ -31,6 +32,7 @@ class Driver:
         self.pub_card = ""
         self.display_text = "New Game Started\n"
         self.first_to_act = 0
+        self.total_winnings = 0
         self.agent = Agent(strategy)
         self.setup_game()
 
@@ -41,7 +43,7 @@ class Driver:
         self.p1_card = util.get_player_card(self.history, -1)
         self.p2_card = util.get_player_card(self.history, 1)
         if self.first_to_act == 1:
-            self.take_agent_action()
+            self.update_game_state(self.agent.get_action(self.history), 1)
 
     def get_game_state(self):
         return {
@@ -50,36 +52,23 @@ class Driver:
             "textbox": self.display_text,
             "pot": evaluator.get_pot(self.history),
             "public": self.pub_card,
-            "actions": util.get_available_actions(self.history)
+            "actions": util.get_available_actions(self.history),
+            "winnings": self.total_winnings
         }
 
-    def update_game_state(self, action):
+    def update_game_state(self, action, player):
         self.history += action
-        self.display_text += PLAYER_NAMES[-1] + ACTION_MESSAGES[action]
+        self.display_text += PLAYER_NAMES[player] + ACTION_MESSAGES[action]
         if util.is_terminal(self.history):
             winner = evaluator.get_winner(self.history)
-            print(self.history)
-            print(winner)
-            winnings = abs(evaluator.calculate_reward_full_info(self.history))
-            print(winnings)
-            self.display_text += "Game over. " + PLAYER_NAMES[winner] + " won: " + str(winnings)
+            winnings = -evaluator.calculate_reward_full_info(self.history)
+            self.total_winnings += winnings
+            self.display_text += "Game over. " + PLAYER_NAMES[winner] + "won: " + str(abs(winnings))
         elif util.player(self.history) == 1:
-            self.take_agent_action()
+            self.update_game_state(self.agent.get_action(self.history), 1)
         elif util.player(self.history) == 0:
-            self.deal_card()
-
-    def take_agent_action(self):
-        action = self.agent.get_action(self.history)
-        self.display_text += PLAYER_NAMES[1] + ACTION_MESSAGES[action]
-        self.history += action
-
-    def deal_card(self):
-        card_dealt = random.choice(util.get_available_cards(self.history))
-        self.display_text += ACTION_MESSAGES[card_dealt]
-        self.pub_card = card_dealt
-        self.history += card_dealt
-        if self.first_to_act == 1:
-            self.take_agent_action()
+            self.pub_card = random.choice(util.get_available_cards(self.history))
+            self.update_game_state(self.pub_card, 0)
 
     def reset(self):
         self.history = ""

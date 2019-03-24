@@ -28,7 +28,8 @@ class Controller(QWidget):
             "textbox": self.update_textbox,
             "public": self.show_public_card,
             "pot": self.update_pot,
-            "actions": self.update_actions
+            "actions": self.update_actions,
+            "winnings": self.update_total_winnings
         }
         self.update_ui()
         self.show_screen()
@@ -60,14 +61,16 @@ class Controller(QWidget):
         update_card(self.ui_screen.opponent_card, value)
 
     def show_public_card(self, value):
-        if value != "":
-            update_card(self.ui_screen.public_card, value)
+        update_card(self.ui_screen.public_card, value)
 
     def update_textbox(self, value):
         self.ui_screen.textbox.setText(value)
 
     def update_pot(self, value):
         self.ui_screen.pot.setText(str(value))
+
+    def update_total_winnings(self, value):
+        self.ui_screen.total_winnings.setText("Total Winnings: " + str(value))
 
     def update_actions(self, actions):
         for i in range(len(self.radio_buttons)):
@@ -79,7 +82,7 @@ class Controller(QWidget):
     def take_action(self):
         for i in range(len(self.radio_buttons)):
             if self.radio_buttons[i].isChecked():
-                self.driver.update_game_state(BUTTON_ACTIONS_BY_INDEX[i])
+                self.driver.update_game_state(BUTTON_ACTIONS_BY_INDEX[i], -1)
 
         self.update_ui()
 
@@ -89,10 +92,13 @@ class Controller(QWidget):
 
 
 def update_card(card, value):
+    if value == "":
+        card.setText("")
+        return
+
     start = "<html><head/><body><p><img src=\""
     source = ":/my_cards/" + value
     end = "\"/></p></body></html>"
-
     card.setText(start + source + end)
 
 if __name__ == "__main__":
