@@ -2,7 +2,7 @@ from ui import screen
 from PyQt5.QtWidgets import (QWidget, QPushButton, QMainWindow, QApplication)
 import sys
 
-from ui.driver import Driver
+from ui.game_model import Driver
 
 BUTTON_ACTIONS_BY_INDEX = {
     0: "f",

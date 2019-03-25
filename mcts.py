@@ -11,7 +11,7 @@ player_two_tree = {}  # Player 2 aka player -1
 
 
 class Mcts:
-    def __init__(self, m_metrics, discount_factor=.95, exploration_constant=50):
+    def __init__(self, m_metrics, discount_factor=.95, exploration_constant=18):
         self.discount_factor = discount_factor
         self.exploration_constant = exploration_constant
         self.m_metrics = m_metrics
@@ -64,8 +64,6 @@ class Mcts:
 
     def get_best_action_ucb(self, history):
         player = util.player(history)
-        if player == -1:
-            return random.choice(util.get_available_actions(history))
 
         if player in {-1, 1}:
             tree = get_tree(player)
@@ -95,6 +93,8 @@ class Mcts:
 
 
 def rollout_policy(actions):
+    if "f" in actions:
+        actions.remove("f")
     return random.choice(actions)
 
 

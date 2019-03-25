@@ -16,12 +16,12 @@ def get_best_response_tree(tree):
     full_tree = build_tree("", {})
     terminals = []
     best_response_tree = {}
-    best_response_tree = apply_mcts_strategy(tree, full_tree, best_response_tree, "", terminals)
+    best_response_tree = apply_mcts_strategy(tree, full_tree, best_response_tree, terminals)
     evaluate_terminals(best_response_tree, terminals)
     add_parents(best_response_tree)
     propagate_rewards(best_response_tree, terminals)
-    # util.print_tree(best_response_tree)
-    # util.manual_traverse_tree(best_response_tree)
+    util.print_tree(best_response_tree)
+    util.manual_traverse_tree(best_response_tree)
     return best_response_tree
 
 
@@ -41,7 +41,40 @@ def build_tree(history, tree):
     return tree
 
 
-def apply_mcts_strategy(tree, full_tree, best_response_tree, current_history, terminals):
+def apply_mcts_strategy(strategy_source, full_tree, best_response_tree, terminals):
+    if "" in strategy_source and isinstance(strategy_source[""], potree.PoNode):
+        return apply_mcts_strategy_from_tree(strategy_source, full_tree, best_response_tree, "", terminals)
+    else:
+        return apply_mcts_strategy_from_deterministic_strategy(strategy_source, full_tree, best_response_tree, "", terminals)
+
+
+def apply_mcts_strategy_from_deterministic_strategy(strategy, full_tree, best_response_tree, current_history, terminals):
+    if current_history not in full_tree:
+        return best_response_tree
+
+    best_response_tree[current_history] = potree.PoNode()
+    children = full_tree[current_history].children
+    if util.is_terminal(current_history):
+        terminals.append(current_history)
+
+    if util.player(current_history) == 1:
+        player_history = util.information_function(current_history, 1)
+        if player_history in strategy:
+            child = current_history + strategy[player_history]
+            best_response_tree[current_history].children = [current_history + strategy[player_history]]
+            children = [child]
+        else:
+            children = []
+    else:
+        best_response_tree[current_history].children = set(children)
+
+    for history in children:
+        apply_mcts_strategy_from_deterministic_strategy(strategy, full_tree, best_response_tree, history, terminals)
+
+    return best_response_tree
+
+
+def apply_mcts_strategy_from_tree(tree, full_tree, best_response_tree, current_history, terminals):
     if current_history not in full_tree:
         return best_response_tree
 
@@ -63,7 +96,7 @@ def apply_mcts_strategy(tree, full_tree, best_response_tree, current_history, te
         best_response_tree[current_history].children = set(children)
 
     for history in children:
-        apply_mcts_strategy(tree, full_tree, best_response_tree, history, terminals)
+        apply_mcts_strategy_from_tree(tree, full_tree, best_response_tree, history, terminals)
 
     return best_response_tree
 
@@ -73,7 +106,7 @@ def evaluate_terminals(best_response_tree, terminals):
         if history.endswith("f"):
             best_response_tree[history].value = evaluator.calculate_reward_full_info(history)
         else:
-            eq_nodes = util.get_information_equivalent_nodes(history, -1)
+            eq_nodes = util.get_information_equivalent_nodes(best_response_tree, history, -1)
             avg = evaluator.average_reward(eq_nodes)
             best_response_tree[history].value = avg
 

@@ -25,7 +25,7 @@ PLAYER_NAMES = {
 
 
 class Driver:
-    def __init__(self, strategy="../strategies/Deterministic_200000_random.json"):
+    def __init__(self, strategy="../strategies/Stochastic_10000000_self-play.json"):
         self.history = ""
         self.p1_card = ""
         self.p2_card = ""

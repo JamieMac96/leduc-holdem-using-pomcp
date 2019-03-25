@@ -119,11 +119,11 @@ def get_all_full_histories_from_player_history(history, player):
     return full_histories
 
 
-def get_information_equivalent_nodes(history, player):
+def get_information_equivalent_nodes(tree, history, player):
     prefix = get_prefix(history)
     player_history = information_function(history, player)
-    cards_copy = get_available_cards(player_history)
     history_copy = player_history.replace(str(prefix), "")
+    cards_copy = get_available_cards(player_history)
 
     information_equivalent_histories = list()
     for card in cards_copy:
@@ -131,7 +131,8 @@ def get_information_equivalent_nodes(history, player):
             eq_history = str(prefix) + history_copy[0:2] + card + history_copy[2:]
         else:
             eq_history = str(prefix) + card + history_copy
-        information_equivalent_histories.append(eq_history)
+        if eq_history in tree:
+            information_equivalent_histories.append(eq_history)
 
     return information_equivalent_histories
 
@@ -190,7 +191,12 @@ def manual_traverse_tree(tree):
         for item in node.children:
             print(item + ": " + str(tree[item]))
         choice = input("choose the child you would like to select: ")
-        node = tree[choice]
+        if choice == "exit":
+            break
+        if choice in tree:
+            node = tree[choice]
+        else:
+            print("Error choice not in tree, type exit to leave")
 
 
 def print_tree(tree):
