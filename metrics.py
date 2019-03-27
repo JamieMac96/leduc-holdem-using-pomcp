@@ -22,6 +22,7 @@ class Metrics:
 
     def handle_exploitability(self, iteration, tree):
         if iteration >= EXPLOITABILITY_MIN and iteration % self.exploitability_interval == 0:
+            print(iteration)
             value = strategy_evaluator.calculate_exploitability(persistance.get_deterministic_strategy(tree))
             self.exploitability_values.append(-value)
 

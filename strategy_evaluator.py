@@ -20,8 +20,8 @@ def get_best_response_tree(tree):
     evaluate_terminals(best_response_tree, terminals)
     add_parents(best_response_tree)
     propagate_rewards(best_response_tree, terminals)
-    util.print_tree(best_response_tree)
-    util.manual_traverse_tree(best_response_tree)
+    # util.print_tree(best_response_tree)
+    # util.manual_traverse_tree(best_response_tree)
     return best_response_tree
 
 

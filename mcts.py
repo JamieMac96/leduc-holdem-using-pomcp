@@ -5,9 +5,11 @@ import evaluator
 
 import math
 import random
+from numpy import random as rand
 
 player_one_tree = {}  # Root node of tree
 player_two_tree = {}  # Player 2 aka player -1
+GAMMA = .01
 
 
 class Mcts:
@@ -29,7 +31,7 @@ class Mcts:
         player_history = util.information_function(history, player)
         # TODO: fix: Some nodes do not have children (expanding both player's trees)
         if player_history in player_tree and player_tree[player_history].children:
-            action = self.get_best_action_ucb(history)
+            action = self.select(history)
         else:
             expand(player_one_tree, history, 1)
             expand(player_two_tree, history, -1)
@@ -62,22 +64,45 @@ class Mcts:
         self.reset_out_of_tree()
         return reward
 
-    def get_best_action_ucb(self, history):
+    def select(self, history):
         player = util.player(history)
-
+        player_history = util.information_function(history, player)
         if player in {-1, 1}:
             tree = get_tree(player)
-            best_value = float('-inf')
-            best_action = None
-            player_history = util.information_function(history, player)
-            for action in util.get_available_actions(history):
-                node_val = self.calculate_next_node_value(tree, player_history, action, player)
-                if node_val > best_value:
-                    best_action = action
-                    best_value = node_val
-            return best_action
+            eta_sub_expression = math.pow(1 + (.05 * math.sqrt(tree[player_history].visitation_count)), -1)
+            eta = max((GAMMA, .9 * eta_sub_expression))
+            z = random.uniform(0, 1)
+            if z < eta:
+                return self.get_best_action_ucb(history, player, tree)
+            else:
+                return self.get_best_action_avg_strategy(player_history, tree)
         else:
             return random.choice(util.get_available_actions(history))
+
+    def get_best_action_avg_strategy(self, player_history, tree):
+        total_child_visits = 0
+        actions = []
+        probabilities = []
+        for child in tree[player_history].children:
+            total_child_visits += tree[child].visitation_count
+
+        for child in tree[player_history].children:
+            child_prob = tree[child].visitation_count / total_child_visits
+            actions.append(child.replace(player_history, ""))
+            probabilities.append(child_prob)
+
+        return rand.choice(actions, p=probabilities)
+
+    def get_best_action_ucb(self, history, player, tree):
+        player_history = util.information_function(history, player)
+        best_value = float('-inf')
+        best_action = None
+        for action in util.get_available_actions(history):
+            node_val = self.calculate_next_node_value(tree, player_history, action, player)
+            if node_val > best_value:
+                best_action = action
+                best_value = node_val
+        return best_action
 
     def calculate_next_node_value(self, tree, player_history, action, player):
         next_history = player_history + action
@@ -93,8 +118,6 @@ class Mcts:
 
 
 def rollout_policy(actions):
-    if "f" in actions:
-        actions.remove("f")
     return random.choice(actions)
 
 
