@@ -1,10 +1,17 @@
-from lookup_tables import LookupTables
-from popcount import PopCount
 from itertools import combinations
 from operator import mul, __or__, __and__, __xor__
 
+from hand_eval.lookup_tables import LookupTables
+from popcount import PopCount
+
+
+# NOTE: This is 3rd party, open-source software originally developed by
+# Alvin Liang et al and can be found here https://github.com/aliang/pokerhand-eval
+
+
 class HandLengthException(Exception):
     pass
+
 
 class HandEvaluator:
     

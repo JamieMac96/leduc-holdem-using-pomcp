@@ -1,8 +1,8 @@
 from ui import screen
-from PyQt5.QtWidgets import (QWidget, QPushButton, QMainWindow, QApplication)
+from PyQt5.QtWidgets import (QWidget, QMainWindow, QApplication)
 import sys
 
-from ui.game_model import Driver
+from ui.game_model import Model
 
 BUTTON_ACTIONS_BY_INDEX = {
     0: "f",
@@ -12,11 +12,13 @@ BUTTON_ACTIONS_BY_INDEX = {
 }
 
 
+# This class uses the game model in order to retrieve the
+# relevant game information and update the UI screen
 class Controller(QWidget):
     def __init__(self, application):
         super().__init__()
         self.application = application
-        self.driver = Driver()
+        self.model = Model()
         self.main_window = QMainWindow()
         self.ui_screen = None
         self.setup_screen()
@@ -51,7 +53,7 @@ class Controller(QWidget):
                 self.ui_screen.bet_radio, self.ui_screen.raise_radio]
 
     def update_ui(self):
-        for key, value in self.driver.get_game_state().items():
+        for key, value in self.model.get_game_state().items():
             self.update_commands[key](value)
 
     def update_player_one_card(self, value):
@@ -82,12 +84,12 @@ class Controller(QWidget):
     def take_action(self):
         for i in range(len(self.radio_buttons)):
             if self.radio_buttons[i].isChecked():
-                self.driver.update_game_state(BUTTON_ACTIONS_BY_INDEX[i], -1)
+                self.model.update_game_state(BUTTON_ACTIONS_BY_INDEX[i], -1)
 
         self.update_ui()
 
     def new_game(self):
-        self.driver.reset()
+        self.model.reset()
         self.update_ui()
 
 

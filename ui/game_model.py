@@ -24,7 +24,7 @@ PLAYER_NAMES = {
 }
 
 
-class Driver:
+class Model:
     def __init__(self, strategy="../strategies/Stochastic_10000000_self-play.json"):
         self.history = ""
         self.p1_card = ""

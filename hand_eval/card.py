@@ -1,5 +1,8 @@
 import re
 
+
+# NOTE: This is 3rd party, open-source software originally developed by
+# Alvin Liang et al and can be found here https://github.com/aliang/pokerhand-eval
 class Card:
     SUIT_TO_STRING = {
         1: "s",

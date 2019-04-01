@@ -8,6 +8,8 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
+# Auto generated code from Qt Designer to define UI template
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -34,7 +36,7 @@ class Ui_MainWindow(object):
         self.new_game_button.setObjectName("new_game_button")
         self.graphicsView = QtWidgets.QGraphicsView(self.centralwidget)
         self.graphicsView.setGeometry(QtCore.QRect(-10, 10, 901, 391))
-        self.graphicsView.setStyleSheet("background: url(/home/jamie/Desktop/Y4S2/product_FYP/leduc-holdem-using-pomcp/ui/game_table.png)")
+        self.graphicsView.setStyleSheet("background: url(game_table.png)")
         self.graphicsView.setObjectName("graphicsView")
         self.textbox = QtWidgets.QTextBrowser(self.centralwidget)
         self.textbox.setGeometry(QtCore.QRect(890, 10, 161, 391))

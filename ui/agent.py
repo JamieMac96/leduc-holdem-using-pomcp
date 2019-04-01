@@ -24,7 +24,7 @@ class Agent:
                 candidates.append(key)
                 probabilities.append(value)
 
-            draw = choice(candidates, p=probabilities)
-            return draw
+            action_choice = choice(candidates, p=probabilities)
+            return action_choice
         else:
             return self.strategy[player_history]

@@ -1,4 +1,9 @@
-from card import Card
+from hand_eval.card import Card
+
+
+# NOTE: This is 3rd party, open-source software originally developed by
+# Alvin Liang et al and can be found here https://github.com/aliang/pokerhand-eval
+
 
 class LookupTables:
     """

@@ -19,8 +19,9 @@ class Mcts:
         self.m_metrics = m_metrics
         self.out_of_tree = {1: False, -1: False, 0: False}
 
+    # This is the core recursive function that drives the algorithm
+    # Se Johannes Heinrich 2017 PhD thesis chapter 3 for further explanation
     def simulate(self, history):
-        player_tree = get_tree(util.player(history))
         if util.is_terminal(history):
             return self.handle_terminal_state(history)
 
@@ -29,13 +30,13 @@ class Mcts:
             return self.rollout(history)
 
         player_history = util.information_function(history, player)
-        # TODO: fix: Some nodes do not have children (expanding both player's trees)
+        player_tree = get_tree(player)
         if player_history in player_tree and player_tree[player_history].children:
             action = self.select(history)
         else:
             expand(player_one_tree, history, 1)
             expand(player_two_tree, history, -1)
-            action = rollout_policy(util.get_available_actions(history))
+            action = random.choice(util.get_available_actions(history))
             if player != 0:
                 self.out_of_tree[1] = True
                 self.out_of_tree[-1] = True
@@ -47,29 +48,23 @@ class Mcts:
 
         return running_reward
 
+    # We use a random rollout policy in order to sample possible future
+    # outcomes at points further down the tree that have not yet been visited
     def rollout(self, history):
-        action = rollout_policy(util.get_available_actions(history))
+        action = random.choice(util.get_available_actions(history))
         new_history = history + action
         return self.simulate(new_history)
 
-    def reset_out_of_tree(self):
-        self.out_of_tree[0] = False
-        self.out_of_tree[1] = False
-        self.out_of_tree[-1] = False
-
-    def handle_terminal_state(self, history):
-        reward = evaluator.calculate_reward_full_info(history)
-        self.m_metrics.cumulative_reward += reward
-        self.m_metrics.rewards.append(self.m_metrics.cumulative_reward)
-        self.reset_out_of_tree()
-        return reward
-
+    # This selection function uses smooth-UCT (see Heinrich) based
+    # selection, with initial selection using pure UCB type
+    # selection ie. choosing best action, but biased towards unexplored nodes.
+    # As eta decays over time we then begin to sample the average strategy.
     def select(self, history):
         player = util.player(history)
         player_history = util.information_function(history, player)
         if player in {-1, 1}:
             tree = get_tree(player)
-            eta_sub_expression = math.pow(1 + (.05 * math.sqrt(tree[player_history].visitation_count)), -1)
+            eta_sub_expression = math.pow(1 + (.1 * math.sqrt(tree[player_history].visitation_count)), -1)
             eta = max((GAMMA, .9 * eta_sub_expression))
             z = random.uniform(0, 1)
             if z < eta:
@@ -116,11 +111,22 @@ class Mcts:
                                       new_visitation_count)
         return new_value + exploration_bonus
 
+    def handle_terminal_state(self, history):
+        reward = evaluator.calculate_reward_full_info(history)
+        self.m_metrics.cumulative_reward += reward
+        self.m_metrics.rewards.append(self.m_metrics.cumulative_reward)
+        self.reset_out_of_tree()
+        return reward
 
-def rollout_policy(actions):
-    return random.choice(actions)
+    def reset_out_of_tree(self):
+        self.out_of_tree[0] = False
+        self.out_of_tree[1] = False
+        self.out_of_tree[-1] = False
 
 
+# Whenever we reach a terminal node we will propagate back values
+# and use this function to update the visitation count and value of
+# the nodes visited in that trajectory.
 def update(tree, history, new_history, running_reward):
     if history not in tree or new_history not in tree:
         return
@@ -144,6 +150,7 @@ def get_tree(player):
         return []
 
 
+# We expand the tree by adding the history and it's children
 def expand(tree, history, player):
     player_history = util.information_function(history, player)
     if player_history not in tree:

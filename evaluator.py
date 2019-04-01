@@ -1,6 +1,8 @@
-import hand_evaluator
+from hand_eval import hand_evaluator
+from hand_eval.card import Card
 import util
-from card import Card
+from hand_eval import hand_evaluator
+
 
 # This module has a number of functions that support evaluation of game
 # outcome based on the history supplied
