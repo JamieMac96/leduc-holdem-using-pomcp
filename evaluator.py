@@ -1,4 +1,3 @@
-from hand_eval import hand_evaluator
 from hand_eval.card import Card
 import util
 from hand_eval import hand_evaluator

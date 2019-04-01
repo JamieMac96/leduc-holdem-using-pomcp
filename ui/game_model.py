@@ -24,6 +24,8 @@ PLAYER_NAMES = {
 }
 
 
+# This class defines a data model for the game and keeps that data model up to date
+# with the game being played using the input from the user as well as from the agent.
 class Model:
     def __init__(self, strategy="../strategies/Stochastic_10000000_self-play.json"):
         self.history = ""

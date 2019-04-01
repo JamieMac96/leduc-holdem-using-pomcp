@@ -1,6 +1,9 @@
-from matplotlib import pyplot as plt
 
 CARDS = ["Qh", "Qs", "Kh", "Ks", "Ah", "As"]
+
+# This module has a number of common functions used throughout the
+# program primarily involved in the manipulation, or information
+# extraction from game histories.
 
 
 def information_function(history, player):

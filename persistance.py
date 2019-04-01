@@ -2,6 +2,10 @@ import json
 import util
 
 
+# This module has the purpose of persisting strategies obtained
+# through execution of the MCTS algorithm.
+
+
 def save_deterministic_strategy(tree, filename):
     strategy = get_deterministic_strategy(tree)
     save_to_file(strategy, filename)

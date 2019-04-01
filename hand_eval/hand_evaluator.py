@@ -2,7 +2,7 @@ from itertools import combinations
 from operator import mul, __or__, __and__, __xor__
 
 from hand_eval.lookup_tables import LookupTables
-from popcount import PopCount
+from hand_eval.popcount import PopCount
 
 
 # NOTE: This is 3rd party, open-source software originally developed by

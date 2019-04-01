@@ -7,6 +7,8 @@ import seaborn as sbn
 EXPLOITABILITY_MIN = 10000
 
 
+# This class is used to calculate, store and display metrics recovered
+# during the execution of the MCTS algorithm.
 class Metrics:
     def __init__(self, exploitability_interval=1000):
         self.exploitability_interval = exploitability_interval

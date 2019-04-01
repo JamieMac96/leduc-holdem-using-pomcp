@@ -8,6 +8,10 @@ EPSILON = .99
 policy = {}
 
 
+# This module has the responsibility of producing the exploitability metric
+# based on the tree or strategy generated from the MCTS algorithm.
+
+
 def calculate_exploitability(tree):
     return get_best_response_tree(tree)[""].value
 

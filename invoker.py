@@ -6,6 +6,9 @@ import persistance
 import time
 
 
+# This class is used to invoke the other components of this program
+# including the MCTS algorithm, the metrics generator and the strategy
+# persistence module
 class Invoker:
     def __init__(self, iterations, repetitions, time_limit=None):
         self.iterations = iterations
@@ -27,13 +30,14 @@ class Invoker:
         self.m_metrics.show_cumulative_reward()
         self.m_metrics.show_cumulative_reward_slope()
         self.m_metrics.show_exploitability()
-        # util.manual_traverse_tree(mcts.player_one_tree)
 
-        # persistance.save_deterministic_strategy(mcts.player_one_tree, "Smooth_Deterministic_" + str(self.iterations) + "_random.json")
-        # persistance.save_stochastic_strategy(mcts.player_one_tree, "Smooth_Stochastic_" + str(self.iterations) + "_random.json")
-        # persistance.save_deterministic_strategy(mcts.player_one_tree, "Smooth_Deterministic_" + str(self.iterations) + "_self-play.json")
-        # persistance.save_stochastic_strategy(mcts.player_one_tree, "Smooth_Stochastic_" + str(self.iterations) + "_self-play.json")
+        persistance.save_deterministic_strategy(mcts.player_one_tree, "Smooth_Deterministic_" + str(self.iterations) + "_random.json")
+        persistance.save_stochastic_strategy(mcts.player_one_tree, "Smooth_Stochastic_" + str(self.iterations) + "_random.json")
+        persistance.save_deterministic_strategy(mcts.player_one_tree, "Smooth_Deterministic_" + str(self.iterations) + "_self-play.json")
+        persistance.save_stochastic_strategy(mcts.player_one_tree, "Smooth_Stochastic_" + str(self.iterations) + "_self-play.json")
 
+    # This method corresponds to the SEARCH function
+    # listed in Johannes Heinrich's 2017 PhD thesis pg 49
     def search(self, history, time_limit=None, iterations=None):
         if self.time_limit is not None:
             self.time_limit = time.time() + time_limit / 1000
